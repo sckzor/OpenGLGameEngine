@@ -7,8 +7,6 @@ import java.util.Map;
 
 import models.TexturedModel;
 import normalMappingRenderer.NormalMappingRenderer;
-import reflectiveEntity.ReflectiveEntity;
-import reflectiveEntity.ReflectiveRenderer;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
@@ -54,11 +52,9 @@ public class MasterRenderer {
 	private NormalMappingRenderer normalMapRenderer;
 	private ShadowMapMasterRenderer shadowMapRenderer;
 	
-	private ReflectiveRenderer reflectiveRenderer;
 	
 	private Map<TexturedModel,List<Entity>> entities = new HashMap<TexturedModel,List<Entity>>();
 	private Map<TexturedModel,List<Entity>> normalMappedEntities = new HashMap<TexturedModel,List<Entity>>();
-	private List<ReflectiveEntity> reflectiveEntities = new ArrayList<ReflectiveEntity>();
 	
 	private List<Terrain> terrains = new ArrayList<Terrain>();
 	
@@ -67,7 +63,6 @@ public class MasterRenderer {
 	public MasterRenderer(Loader loader, Camera camera){
 		enableCulling();
 		createProjectionMatrix();
-		reflectiveRenderer = new ReflectiveRenderer(projectionMatrix);
 		renderer = new EntityRenderer(shader,projectionMatrix);
 		terrainRenderer = new TerrainRenderer(terrainShader,projectionMatrix);
 		CubeMap enviroMap = new CubeMap(TEXTURE_FILES, loader);
@@ -82,7 +77,7 @@ public class MasterRenderer {
 		return projectionMatrix;
 	}
 	
-	public void renderScene(List<Entity> entities, List<Terrain> terrains, List<Entity> normalEntities, List<ReflectiveEntity> reflectiveEntities, List<Light> lights,
+	public void renderScene(List<Entity> entities, List<Terrain> terrains, List<Entity> normalEntities, List<Light> lights,
 			Camera camera, Vector4f clippingPlane)
 	{
 		for (Terrain terrain:terrains)
@@ -99,10 +94,10 @@ public class MasterRenderer {
 		}
 		
 		
-		render(lights, camera, clippingPlane, reflectiveEntities);
+		render(lights, camera, clippingPlane);
 	}
 	
-	public void render(List<Light> lights,Camera camera, Vector4f clippingPlane,List<ReflectiveEntity> reflectiveEntities){
+	public void render(List<Light> lights,Camera camera, Vector4f clippingPlane){
 		prepare();
 		shader.start();
 		shader.loadClippingPlane(clippingPlane);
@@ -120,7 +115,6 @@ public class MasterRenderer {
 		terrainRenderer.render(terrains, shadowMapRenderer.getToShadowMapSpaceMatrix());
 		terrainShader.stop();
 		skyboxRenderer.render(camera, RED, GREEN, BLUE);
-		reflectiveRenderer.render(reflectiveEntities, camera);
 		terrains.clear();
 		entities.clear();
 		normalMappedEntities.clear();

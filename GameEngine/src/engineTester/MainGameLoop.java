@@ -14,7 +14,6 @@ import particles.ParticleSystem;
 import particles.ParticleTexture;
 import postProcessing.Fbo;
 import postProcessing.PostProcessing;
-import reflectiveEntity.ReflectiveEntity;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.Display;
@@ -24,6 +23,7 @@ import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
+import collisionBox.CollisionBox;
 import renderEngine.DisplayManager;
 import renderEngine.Loader;
 import renderEngine.MasterRenderer;
@@ -57,8 +57,8 @@ public class MainGameLoop {
 		TextMaster.init(loader);
 		RawModel bunny = OBJLoader.loadObjModel("bunny", loader);
 		TexturedModel staticBunny = new TexturedModel(bunny, new ModelTexture(loader.loadTexture("white", -0.4f)));
-		Player player = new Player(staticBunny, new Vector3f(400, 10, 400), 0, 180, 0, 0.6f);
-		Camera camera = new Camera(player);	
+		Player player = new Player(staticBunny, new CollisionBox(new Vector3f(390, 0, 390),new Vector3f(410, 20, 410)), new Vector3f(400, 10, 400), 0, 180, 0, 0.6f);
+		Camera camera = new Camera(false, player);	
 		MasterRenderer renderer = new MasterRenderer(loader, camera);	
 		ParticleMaster.init(loader, renderer.getProjectionMatrix()); 
 		
@@ -96,9 +96,8 @@ public class MainGameLoop {
 		List<Entity> entities = new ArrayList<Entity>();
 		List<Entity> normalMappedEntities = new ArrayList<Entity>();
 		List<CubeMap> envMaps = new ArrayList<CubeMap>();
-		List<ReflectiveEntity> reflectiveEntities = new ArrayList<ReflectiveEntity>();
 
-		CubeMap enviroMap = new CubeMap(MasterRenderer.ENVIRO_MAP_SNOW, loader);		
+		CubeMap enviroMap = new CubeMap(MasterRenderer.ENVIRO_MAP_SNOW, loader);	
 
 		TexturedModel barrelModel = new TexturedModel(NormalMappedObjLoader.loadOBJ("barrel", loader), new ModelTexture(loader.loadTexture("barrel", -0.4f)));
 		barrelModel.getTexture().setNormalMap(loader.loadTexture("barrelNormal", -0.4f));
@@ -131,7 +130,7 @@ public class MainGameLoop {
 			float x = random.nextFloat()* 800;
 			float z = random.nextFloat()* 800;
 			float y = terrain.getHeightOfTerrain(x, z);
-			entities.add(new Entity(staticCherry, new Vector3f(x, y, z),0f,0f,0f,3f));
+			entities.add(new Entity(staticCherry, new CollisionBox(new Vector3f(x-15, y-100, z-15), new Vector3f(x+15, y+100, z+15)), new Vector3f(x, y, z),0f,0f,0f,3f));
 			x = random.nextFloat()* 800;
 			z = random.nextFloat()* 800;
 			y = terrain.getHeightOfTerrain(x, z);
@@ -148,9 +147,6 @@ public class MainGameLoop {
 		Light light = new Light(new Vector3f(400,-8,400),new Vector3f(0f,2f,0f), new Vector3f(1f,0.01f,0.002f));
 		lights.add(light);
 		
-		ReflectiveEntity lampPost = new ReflectiveEntity(staticlamp, enviroMap, new Vector3f(400,-8, 400), 0, 0, 0, 1, 0, 0);
-		reflectiveEntities.add(lampPost);
-
 		entities.add(player);
 		
 		MousePicker picker = new MousePicker(camera, renderer.getProjectionMatrix(), terrain);
@@ -176,10 +172,13 @@ public class MainGameLoop {
 		Fbo outputFbo2 = new Fbo(Display.getWidth(), Display.getHeight(), Fbo.DEPTH_TEXTURE);
 
 		PostProcessing.init(loader);
-		
+				
+		Entity lampPost = new Entity(staticlamp, new Vector3f(400,-8, 400), 0, 0, 0, 1);
+		entities.add(lampPost);
+
 		
 		while(!Display.isCloseRequested()){
-			player.move(terrain);
+			player.move(terrain, entities);
 			camera.move();
 			picker.update();
 			
@@ -188,18 +187,19 @@ public class MainGameLoop {
 			ParticleMaster.update(camera);
 			
 			renderer.renderShadowMap(entities, sun);
+			
 			GL11.glEnable(GL30.GL_CLIP_DISTANCE0);
 			
 			fbos.bindReflectionFrameBuffer();
 			float distance = 2 * (camera.getPosition().y - waters.get(0).getHeight()+1f);
 			camera.getPosition().y -= distance;
 			camera.invertPitch();
-			renderer.renderScene(entities, terrains, normalMappedEntities, reflectiveEntities, lights, camera, new Vector4f(0, 1, 0, -waters.get(0).getHeight()));
+			renderer.renderScene(entities, terrains, normalMappedEntities, lights, camera, new Vector4f(0, 1, 0, -waters.get(0).getHeight()));
 			camera.getPosition().y += distance;
 			camera.invertPitch();
 			
 			fbos.bindRefractionFrameBuffer();
-			renderer.renderScene(entities, terrains, normalMappedEntities, reflectiveEntities, lights, camera, new Vector4f(0, -1, 0, waters.get(0).getHeight()+1));
+			renderer.renderScene(entities, terrains, normalMappedEntities, lights, camera, new Vector4f(0, -1, 0, waters.get(0).getHeight()+1));
 			
 			fbos.unbindCurrentFrameBuffer();
 			
@@ -212,7 +212,7 @@ public class MainGameLoop {
 			}
 
 			multisampleFbo.bindFrameBuffer();
-			renderer.renderScene(entities, terrains, normalMappedEntities, reflectiveEntities, lights, camera, new Vector4f(0, -1, 0, 100000000));
+			renderer.renderScene(entities, terrains, normalMappedEntities, lights, camera, new Vector4f(0, -1, 0, 100000000));
 			waterRenderer.render(waters, camera, lights);
 			ParticleMaster.renderParticles(camera, false);
 			

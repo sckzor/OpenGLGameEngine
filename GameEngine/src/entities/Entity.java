@@ -4,6 +4,8 @@ import models.TexturedModel;
 
 import org.lwjgl.util.vector.Vector3f;
 
+import collisionBox.CollisionBox;
+
 public class Entity {
 
 	private TexturedModel model;
@@ -11,6 +13,8 @@ public class Entity {
 	private float rotX, rotY, rotZ;
 	private float scale;
 
+	public CollisionBox collisionBox;
+	
 	private int textureIndex = 0;
 	
 	public Entity(TexturedModel model, Vector3f position, float rotX, float rotY, float rotZ,
@@ -34,6 +38,19 @@ public class Entity {
 		this.textureIndex = index;
 	}
 	
+	
+	public Entity(TexturedModel model, CollisionBox collisionBox, Vector3f position, float rotX, float rotY, float rotZ,
+			float scale) {
+		this.model = model;
+		this.position = position;
+		this.rotX = rotX;
+		this.rotY = rotY;
+		this.rotZ = rotZ;
+		this.collisionBox = collisionBox;
+		this.scale = scale;
+	}
+	
+
 	public float getTextureXOffset()
 	{
 		int column = textureIndex%model.getTexture().getNumberOfRows();
@@ -104,6 +121,11 @@ public class Entity {
 
 	public void setScale(float scale) {
 		this.scale = scale;
+	}
+	
+	public CollisionBox getCollisionBox()
+	{
+		return collisionBox;
 	}
 
 }

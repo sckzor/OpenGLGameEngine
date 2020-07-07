@@ -1,5 +1,11 @@
 package renderEngine;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
+import javax.imageio.ImageIO;
+
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
 import org.lwjgl.opengl.ContextAttribs;
@@ -8,6 +14,7 @@ import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.PixelFormat;
+import org.newdawn.slick.opengl.ImageIOImageData;
 
 public class DisplayManager {
 	
@@ -27,9 +34,18 @@ public class DisplayManager {
 		try {
 			Display.setDisplayMode(new DisplayMode(WIDTH,HEIGHT));
 			Display.create(new PixelFormat().withDepthBits(24), attribs);
-			Display.setTitle("Our First Display!");
+			Display.setTitle("Our First Display!");			
 			GL11.glEnable(GL13.GL_MULTISAMPLE);
 		} catch (LWJGLException e) {
+			e.printStackTrace();
+		}
+		
+		try {
+			Display.setIcon(new ByteBuffer[] {
+			        new ImageIOImageData().imageToByteBuffer(ImageIO.read(new File("res/cat.png")), false, false, null),
+			        new ImageIOImageData().imageToByteBuffer(ImageIO.read(new File("res/cat.png")), false, false, null)
+			        });
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
