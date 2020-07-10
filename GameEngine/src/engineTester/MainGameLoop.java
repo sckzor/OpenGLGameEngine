@@ -57,7 +57,8 @@ public class MainGameLoop {
 		TextMaster.init(loader);
 		RawModel bunny = OBJLoader.loadObjModel("bunny", loader);
 		TexturedModel staticBunny = new TexturedModel(bunny, new ModelTexture(loader.loadTexture("white", -0.4f)));
-		Player player = new Player(staticBunny, new CollisionBox(new Vector3f(390, 0, 390),new Vector3f(410, 20, 410)), new Vector3f(400, 10, 400), 0, 180, 0, 0.6f);
+		Player player = new Player(staticBunny, new Vector3f(400, 10, 400), 0, 180, 0, 0.6f);
+		player.addCollisionBox(new CollisionBox(new Vector3f(390, 0, 390),new Vector3f(410, 20, 410)));
 		Camera camera = new Camera(false, player);	
 		MasterRenderer renderer = new MasterRenderer(loader, camera);	
 		ParticleMaster.init(loader, renderer.getProjectionMatrix()); 
@@ -130,7 +131,9 @@ public class MainGameLoop {
 			float x = random.nextFloat()* 800;
 			float z = random.nextFloat()* 800;
 			float y = terrain.getHeightOfTerrain(x, z);
-			entities.add(new Entity(staticCherry, new CollisionBox(new Vector3f(x-15, y-100, z-15), new Vector3f(x+15, y+100, z+15)), new Vector3f(x, y, z),0f,0f,0f,3f));
+			Entity tree = new Entity(staticCherry, new Vector3f(x, y, z),0f,0f,0f,3f);
+			tree.addCollisionBox(new CollisionBox(new Vector3f(x-15, y-100, z-15), new Vector3f(x+15, y+100, z+15)));
+			entities.add(tree);
 			x = random.nextFloat()* 800;
 			z = random.nextFloat()* 800;
 			y = terrain.getHeightOfTerrain(x, z);

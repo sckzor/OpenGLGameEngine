@@ -2,6 +2,9 @@ package entities;
 
 import models.TexturedModel;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.lwjgl.util.vector.Vector3f;
 
 import collisionBox.CollisionBox;
@@ -13,7 +16,7 @@ public class Entity {
 	private float rotX, rotY, rotZ;
 	private float scale;
 
-	public CollisionBox collisionBox;
+	public List<CollisionBox> collisionBoxes = new ArrayList<CollisionBox>();
 	
 	private int textureIndex = 0;
 	
@@ -37,19 +40,6 @@ public class Entity {
 		this.scale = scale;
 		this.textureIndex = index;
 	}
-	
-	
-	public Entity(TexturedModel model, CollisionBox collisionBox, Vector3f position, float rotX, float rotY, float rotZ,
-			float scale) {
-		this.model = model;
-		this.position = position;
-		this.rotX = rotX;
-		this.rotY = rotY;
-		this.rotZ = rotZ;
-		this.collisionBox = collisionBox;
-		this.scale = scale;
-	}
-	
 
 	public float getTextureXOffset()
 	{
@@ -123,9 +113,29 @@ public class Entity {
 		this.scale = scale;
 	}
 	
-	public CollisionBox getCollisionBox()
+	public void addCollisionBox(CollisionBox box)
 	{
-		return collisionBox;
+		this.collisionBoxes.add(box);
+	}
+	
+	public CollisionBox hasCollided(List<Entity> entities)
+	{
+		for(CollisionBox thisBox : collisionBoxes) {
+			for(Entity entity : entities)
+			{
+				if(entity.collisionBoxes != null)
+				{
+					for(CollisionBox EntityBox : entity.collisionBoxes) {
+						if(thisBox.hasCollided(EntityBox))						
+						{
+							return EntityBox;
+						}     
+					}
+				}
+			}
+		}
+		return null;
+		
 	}
 
 }

@@ -32,10 +32,6 @@ public class Player extends Entity{
 		super(model, position, rotX, rotY, rotZ, scale);
 	}
 	
-	public Player(TexturedModel model, CollisionBox box, Vector3f position, float rotX, float rotY, float rotZ, float scale) {
-		super(model, box,position, rotX, rotY, rotZ, scale);
-	}
-	
 	public void move(Terrain terrain, List<Entity> entities)
 	{		
 		checkInputs();
@@ -46,25 +42,20 @@ public class Player extends Entity{
 		
 		float dx = (float) (distance * Math.sin(Math.toRadians(super.getRotY())));
 		float dz = (float) (distance * Math.cos(Math.toRadians(super.getRotY())));
-		
-		for(Entity entity:entities)
-		{
-			if(entity.collisionBox != null)
-			{
-				if(this.collisionBox.hasCollided(entity.collisionBox) && !collided )						
-				{
-					collided = true;
-					collisionDx = dx;
-					collisionDz = dz;
-				}                            
-			}
-		}
+
 		
 		System.out.println(Math.signum(dx) + " - " + Math.signum(dz) + "  /  " + collisionDx + " - " + collisionDz);
 		
+		if(super.hasCollided(entities) != null && !collided)
+		{
+			collided = true;
+			collisionDx = dx;
+			collisionDz = dz;
+		}
+		
 		if(collided)
 		{
-			if((-Math.signum(collisionDx) == Math.signum(dx) || -Math.signum(collisionDz) == Math.signum(dz)) && collided )
+			if((-Math.signum(collisionDx) == Math.signum(dx) || -Math.signum(collisionDz) == Math.signum(dz)) && collided)
 			{
 				super.increasePosition(dx, 0, dz);
 				collided = false;
@@ -88,7 +79,10 @@ public class Player extends Entity{
 			isInAir = false;
 		}
 		
-		super.collisionBox.move(super.getPosition());
+		for(CollisionBox Box:super.collisionBoxes)
+		{
+			Box.move(super.getPosition());
+		}
 	}
 	
 	private void jump()
