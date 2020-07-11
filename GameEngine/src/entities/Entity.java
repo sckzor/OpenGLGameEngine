@@ -7,6 +7,8 @@ import java.util.List;
 
 import org.lwjgl.util.vector.Vector3f;
 
+import audio.AudioMaster;
+import audio.Source;
 import collisionBox.CollisionBox;
 
 public class Entity {
@@ -15,23 +17,29 @@ public class Entity {
 	private Vector3f position;
 	private float rotX, rotY, rotZ;
 	private float scale;
-
+	private Source audioSource;
+	
 	public List<CollisionBox> collisionBoxes = new ArrayList<CollisionBox>();
 	
 	private int textureIndex = 0;
 	
 	public Entity(TexturedModel model, Vector3f position, float rotX, float rotY, float rotZ,
-			float scale) {
+			float scale, boolean emmitsSound) {
 		this.model = model;
 		this.position = position;
 		this.rotX = rotX;
 		this.rotY = rotY;
 		this.rotZ = rotZ;
 		this.scale = scale;
+		if(emmitsSound) {
+			audioSource = new Source(AudioMaster.DEFAULT_ROLL_OFF_FACTOR, AudioMaster.DEFAULT_REFERENCE_DISTANCE, AudioMaster.DEFAULT_MAX_DISTANCE);
+			audioSource.setPosition(position.x, position.y + 3, position.z);
+		}
+		
 	}
 
 	public Entity(TexturedModel model, int index, Vector3f position, float rotX, float rotY, float rotZ,
-			float scale) {
+			float scale, boolean emmitsSound) {
 		this.model = model;
 		this.position = position;
 		this.rotX = rotX;
@@ -39,7 +47,31 @@ public class Entity {
 		this.rotZ = rotZ;
 		this.scale = scale;
 		this.textureIndex = index;
+		if(emmitsSound) {
+			audioSource = new Source(AudioMaster.DEFAULT_ROLL_OFF_FACTOR, AudioMaster.DEFAULT_REFERENCE_DISTANCE, AudioMaster.DEFAULT_MAX_DISTANCE);
+			audioSource.setPosition(position.x, position.y + 3, position.z);
+		}
+
 	}
+	
+	public void playAudio(String sourceName, float volume, float pitch, boolean looping)
+	{
+		if(audioSource != null) {
+			int buffer = AudioMaster.loadSound("audio/" + sourceName + ".wav");
+			audioSource.setLooping(looping);
+			audioSource.setVolume(volume);
+			audioSource.setPitch(pitch);
+			audioSource.play(buffer);
+		}
+	}
+	
+	public void stopAudio()
+	{
+		if(audioSource != null) {
+			audioSource.stop();
+		}
+	}
+
 
 	public float getTextureXOffset()
 	{
@@ -57,6 +89,10 @@ public class Entity {
 		this.position.x += dx;
 		this.position.y += dy;
 		this.position.z += dz;
+		if(audioSource != null) {
+			audioSource.setPosition(position.x, position.y, position.z);
+		}
+
 	}
 
 	public void increaseRotation(float dx, float dy, float dz) {
@@ -79,6 +115,9 @@ public class Entity {
 
 	public void setPosition(Vector3f position) {
 		this.position = position;
+		if(audioSource != null) {
+			audioSource.setPosition(position.x, position.y, position.z);
+		}
 	}
 
 	public float getRotX() {
@@ -120,22 +159,24 @@ public class Entity {
 	
 	public CollisionBox hasCollided(List<Entity> entities)
 	{
-		for(CollisionBox thisBox : collisionBoxes) {
-			for(Entity entity : entities)
-			{
-				if(entity.collisionBoxes != null)
-				{
-					for(CollisionBox EntityBox : entity.collisionBoxes) {
-						if(thisBox.hasCollided(EntityBox))						
-						{
-							return EntityBox;
-						}     
+		for(Entity entity : entities)
+		{
+			if(entity.position.x > this.position.x - 10 && entity.position.y > this.position.y - 10 && entity.position.z > this.position.z - 10 &&
+					entity.position.x < this.position.x + 10 && entity.position.y < this.position.y + 10 && entity.position.z < this.position.z + 10) {
+				for(CollisionBox thisBox : collisionBoxes) {
+					if(entity.collisionBoxes != null)
+					{
+						for(CollisionBox EntityBox : entity.collisionBoxes) {
+							if(thisBox.hasCollided(EntityBox))						
+							{
+								return EntityBox;
+							}     
+						}
 					}
 				}
 			}
 		}
-		return null;
-		
+		return null;		
 	}
 
 }

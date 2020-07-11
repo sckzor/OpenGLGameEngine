@@ -1,11 +1,15 @@
 package particles;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
+import audio.AudioMaster;
+import audio.Source;
 import renderEngine.DisplayManager;
 
 public class ParticleSystem {
@@ -16,17 +20,53 @@ public class ParticleSystem {
 	private boolean randomRotation = false;
 	private Vector3f direction;
 	private float directionDeviation = 0;
+	
+	private Source audioSource;
+	private Vector3f systemCenter;
 
 	private Random random = new Random();
 	private ParticleTexture texture;
 
-	public ParticleSystem(ParticleTexture texture, float pps, float speed, float gravityComplient, float lifeLength, float scale) {
+	public ParticleSystem(ParticleTexture texture, float pps, float speed, float gravityComplient, float lifeLength, float scale, Vector3f systemCenter, boolean emmitsSound) {
 		this.texture = texture;
 		this.pps = pps;
 		this.averageSpeed = speed;
 		this.gravityComplient = gravityComplient;
 		this.averageLifeLength = lifeLength;
 		this.averageScale = scale;
+		this.systemCenter = systemCenter;
+		if(emmitsSound) {
+			audioSource = new Source(AudioMaster.DEFAULT_ROLL_OFF_FACTOR, AudioMaster.DEFAULT_REFERENCE_DISTANCE, AudioMaster.DEFAULT_MAX_DISTANCE);
+			audioSource.setPosition(systemCenter.x, systemCenter.y, systemCenter.z);
+		}
+	}
+	
+	public void playAudio(String sourceName, float volume, float pitch, boolean looping)
+	{
+		if(audioSource != null) {
+			int buffer = AudioMaster.loadSound("audio/" + sourceName + ".wav");
+			audioSource.setLooping(looping);
+			audioSource.setVolume(volume);
+			audioSource.setPitch(pitch);
+			audioSource.play(buffer);
+		}
+	}
+	
+	public void stopAudio()
+	{
+		if(audioSource != null) {
+			audioSource.stop();
+		}
+	}
+	
+	public void moveSystem(Vector3f centerOffset)
+	{
+		systemCenter.x += centerOffset.x;
+		systemCenter.y += centerOffset.y;
+		systemCenter.z += centerOffset.z;
+		if(audioSource != null) {
+			audioSource.setPosition(systemCenter.x, systemCenter.y, systemCenter.z);
+		}
 	}
 
 	public void setDirection(Vector3f direction, float deviation) {
@@ -50,7 +90,7 @@ public class ParticleSystem {
 		this.scaleError = error * averageScale;
 	}
 
-	public void generateParticles(Vector3f systemCenter) {
+	public void generateParticles() {
 		float delta = DisplayManager.getFrameTimeSeconds();
 		float particlesToCreate = pps * delta;
 		int count = (int) Math.floor(particlesToCreate);

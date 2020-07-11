@@ -6,6 +6,7 @@ import java.util.List;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.util.vector.Vector3f;
 
+import audio.AudioMaster;
 import collisionBox.CollisionBox;
 import models.TexturedModel;
 import renderEngine.DisplayManager;
@@ -29,7 +30,7 @@ public class Player extends Entity{
 	private boolean isInAir = false;
 	
 	public Player(TexturedModel model, Vector3f position, float rotX, float rotY, float rotZ, float scale) {
-		super(model, position, rotX, rotY, rotZ, scale);
+		super(model, position, rotX, rotY, rotZ, scale, false);
 	}
 	
 	public void move(Terrain terrain, List<Entity> entities)
@@ -42,9 +43,6 @@ public class Player extends Entity{
 		
 		float dx = (float) (distance * Math.sin(Math.toRadians(super.getRotY())));
 		float dz = (float) (distance * Math.cos(Math.toRadians(super.getRotY())));
-
-		
-		System.out.println(Math.signum(dx) + " - " + Math.signum(dz) + "  /  " + collisionDx + " - " + collisionDz);
 		
 		if(super.hasCollided(entities) != null && !collided)
 		{
@@ -59,15 +57,12 @@ public class Player extends Entity{
 			{
 				super.increasePosition(dx, 0, dz);
 				collided = false;
-
 			}
 
 		}else
 		{
-
 			super.increasePosition(dx, 0, dz);
 		}
-		
 		
 		upwardsSpeed += GRAVITY * DisplayManager.getFrameTimeSeconds();
 		super.increasePosition(0, upwardsSpeed * DisplayManager.getFrameTimeSeconds(), 0);
@@ -83,6 +78,9 @@ public class Player extends Entity{
 		{
 			Box.move(super.getPosition());
 		}
+		
+		AudioMaster.setListenerData(super.getPosition().x, super.getPosition().y, super.getPosition().z);
+
 	}
 	
 	private void jump()

@@ -23,6 +23,8 @@ import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
+import audio.AudioMaster;
+import audio.Source;
 import collisionBox.CollisionBox;
 import renderEngine.DisplayManager;
 import renderEngine.Loader;
@@ -53,6 +55,8 @@ public class MainGameLoop {
 	public static void main(String[] args) {
 
 		DisplayManager.createDisplay();
+		AudioMaster.init();
+		AudioMaster.setListenerData(0, 0, 0);
 		Loader loader = new Loader();
 		TextMaster.init(loader);
 		RawModel bunny = OBJLoader.loadObjModel("bunny", loader);
@@ -64,8 +68,15 @@ public class MainGameLoop {
 		ParticleMaster.init(loader, renderer.getProjectionMatrix()); 
 		
 		FontType font = new FontType(loader.loadTexture("arial", 0), new File("res/arial.fnt"));
-		GUIText text = new GUIText("Hello World", 3, font, new Vector2f(0.5f, 0.5f), 0.5f, true);
-		text.setColour(1, 0, 1);
+		GUIText PlayerXposition = new GUIText("X: ---", 1, font, new Vector2f(0.05f, 0.05f), 0.1f, true);
+		PlayerXposition.setColour(1, 1, 1);
+		
+		GUIText PlayerYposition = new GUIText("Y: ---", 1, font, new Vector2f(0.05f, 0.07f), 0.1f, true);
+		PlayerYposition.setColour(1, 1, 1);
+		
+		GUIText PlayerZposition = new GUIText("Z: ---", 1, font, new Vector2f(0.05f, 0.09f), 0.1f, true);
+		PlayerZposition.setColour(1, 1, 1);
+		
 		
 		TerrainTexture backgroundTexture = new TerrainTexture(loader.loadTexture("grassy2", -0.4f));
 		TerrainTexture rTexture = new TerrainTexture(loader.loadTexture("mud", -0.4f));
@@ -106,7 +117,7 @@ public class MainGameLoop {
 		barrelModel.getTexture().setReflectivity(0.5f);
 		barrelModel.getTexture().setSpecularMap(loader.loadTexture("barrelS", -0.4f));
 		
-		normalMappedEntities.add(new Entity(barrelModel, new Vector3f(400, 10, 400), 0, 0, 0, 1f));
+		normalMappedEntities.add(new Entity(barrelModel, new Vector3f(400, 10, 400), 0, 0, 0, 1f, false));
 		
 		
 		RawModel cherry = OBJLoader.loadObjModel("cherry", loader);
@@ -131,17 +142,17 @@ public class MainGameLoop {
 			float x = random.nextFloat()* 800;
 			float z = random.nextFloat()* 800;
 			float y = terrain.getHeightOfTerrain(x, z);
-			Entity tree = new Entity(staticCherry, new Vector3f(x, y, z),0f,0f,0f,3f);
+			Entity tree = new Entity(staticCherry, new Vector3f(x, y, z),0f,0f,0f,3f, false);
 			tree.addCollisionBox(new CollisionBox(new Vector3f(x-15, y-100, z-15), new Vector3f(x+15, y+100, z+15)));
 			entities.add(tree);
 			x = random.nextFloat()* 800;
 			z = random.nextFloat()* 800;
 			y = terrain.getHeightOfTerrain(x, z);
-			entities.add(new Entity(staticGrass, new Vector3f(x, y, z),0,0,0,1));
+			entities.add(new Entity(staticGrass, new Vector3f(x, y, z),0,0,0,1, false));
 			x = random.nextFloat()* 800;
 			z = random.nextFloat()* 800;
 			y = terrain.getHeightOfTerrain(x, z);
-			entities.add(new Entity(staticFern, random.nextInt(4), new Vector3f(x, y, z),0,0,0,1));
+			entities.add(new Entity(staticFern, random.nextInt(4), new Vector3f(x, y, z),0,0,0,1, false));
 		}
 		
 		Light sun = new Light(new Vector3f(1000000,1500000,-1000000),new Vector3f(1f,1f,1f));
@@ -151,6 +162,7 @@ public class MainGameLoop {
 		lights.add(light);
 		
 		entities.add(player);
+		
 		
 		MousePicker picker = new MousePicker(camera, renderer.getProjectionMatrix(), terrain);
 		
@@ -163,7 +175,8 @@ public class MainGameLoop {
 		
 		ParticleTexture particleTexture = new ParticleTexture(loader.loadTexture("fire", -0.4f), 8);
 		
-		ParticleSystem system = new ParticleSystem(particleTexture, 40, 10, -10f, 10, 10f);
+		ParticleSystem system = new ParticleSystem(particleTexture, 40, 10, -10f, 10, 10f, new Vector3f(410, 8, 410), true);
+		system.playAudio("fire", 3, 1, true);
 		system.randomizeRotation();
 		system.setDirection(new Vector3f(0, 1, 0), 0.1f);
 		system.setLifeError(0.1f);
@@ -176,19 +189,21 @@ public class MainGameLoop {
 
 		PostProcessing.init(loader);
 				
-		Entity lampPost = new Entity(staticlamp, new Vector3f(400,-8, 400), 0, 0, 0, 1);
+		Entity lampPost = new Entity(staticlamp, new Vector3f(400,-8, 400), 0, 0, 0, 1, true);
 		entities.add(lampPost);
+		lampPost.playAudio("bounce", 1, 1, true);
 
 		
 		while(!Display.isCloseRequested()){
 			player.move(terrain, entities);
 			camera.move();
 			picker.update();
+
 			
-			system.generateParticles(new Vector3f(410, 8, 410));
+			system.generateParticles();
 			
 			ParticleMaster.update(camera);
-			
+						
 			renderer.renderShadowMap(entities, sun);
 			
 			GL11.glEnable(GL30.GL_CLIP_DISTANCE0);
@@ -225,6 +240,10 @@ public class MainGameLoop {
 			PostProcessing.doPostProcessing(outputFbo.getColourTexture(), outputFbo2.getColourTexture());
 			
 			guiRenderer.renderer(guis);
+			PlayerXposition.setTextString("X: " + String.valueOf(player.getPosition().x));
+			PlayerYposition.setTextString("Y: " + String.valueOf(player.getPosition().y));
+			PlayerZposition.setTextString("Z: " + String.valueOf(player.getPosition().z));
+
 			TextMaster.render();
 			
 			DisplayManager.updateDisplay();
@@ -242,6 +261,7 @@ public class MainGameLoop {
 		renderer.cleanUp();
 		loader.cleanUp();
 		DisplayManager.closeDisplay();
+		AudioMaster.cleanUp();
 
 	}
 
