@@ -9,6 +9,7 @@ import org.lwjgl.util.vector.Vector4f;
 
 import terrains.Terrain;
 import entities.Camera;
+import scene.Scene;
 
 public class MousePicker {
 
@@ -24,8 +25,8 @@ public class MousePicker {
 	private Terrain terrain;
 	private Vector3f currentTerrainPoint;
 
-	public MousePicker(Camera cam, Matrix4f projection, Terrain terrain) {
-		camera = cam;
+	public MousePicker(Scene scene, Matrix4f projection, Terrain terrain) {
+		camera = scene.getCamera();
 		projectionMatrix = projection;
 		viewMatrix = Maths.createViewMatrix(camera);
 		this.terrain = terrain;

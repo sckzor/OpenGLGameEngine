@@ -11,6 +11,7 @@ import org.lwjgl.util.vector.Matrix4f;
 
 import entities.Camera;
 import renderEngine.Loader;
+import scene.Scene;
 
 public class ParticleMaster {
 
@@ -22,7 +23,7 @@ public class ParticleMaster {
 		renderer = new ParticleRenderer(loader, projectionMatrix);
 	}
 	
-	public static void update(Camera camera)
+	public static void update(Scene scene)
 	{
 		Iterator<Entry<ParticleTexture, List<Particle>>> mapIterator = particles.entrySet().iterator();
 		while(mapIterator.hasNext()) {
@@ -32,7 +33,7 @@ public class ParticleMaster {
 			while(iterator.hasNext())
 			{
 				Particle p = iterator.next();
-				boolean stillAlive = p.update(camera);
+				boolean stillAlive = p.update(scene.getCamera());
 				if(!stillAlive)
 				{
 					iterator.remove();
@@ -46,9 +47,9 @@ public class ParticleMaster {
 		}
 	}
 	
-	public static void renderParticles(Camera camera, boolean useAdditive)
+	public static void renderParticles(Scene scene, boolean useAdditive)
 	{
-		renderer.render(particles, camera, useAdditive);
+		renderer.render(particles, scene.getCamera(), useAdditive);
 		
 	}
 	

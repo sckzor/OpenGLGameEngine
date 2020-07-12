@@ -7,6 +7,8 @@ import java.util.Map;
 
 import models.TexturedModel;
 import normalMappingRenderer.NormalMappingRenderer;
+import scene.Scene;
+
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
@@ -55,12 +57,11 @@ public class MasterRenderer {
 	
 	private Map<TexturedModel,List<Entity>> entities = new HashMap<TexturedModel,List<Entity>>();
 	private Map<TexturedModel,List<Entity>> normalMappedEntities = new HashMap<TexturedModel,List<Entity>>();
-	
+		
 	private List<Terrain> terrains = new ArrayList<Terrain>();
-	
 	private SkyBoxRenderer skyboxRenderer;
 	
-	public MasterRenderer(Loader loader, Camera camera){
+	public MasterRenderer(Loader loader, Scene scene){
 		enableCulling();
 		createProjectionMatrix();
 		renderer = new EntityRenderer(shader,projectionMatrix);
@@ -68,7 +69,7 @@ public class MasterRenderer {
 		CubeMap enviroMap = new CubeMap(TEXTURE_FILES, loader);
 		skyboxRenderer = new SkyBoxRenderer(enviroMap, projectionMatrix);
 		normalMapRenderer = new NormalMappingRenderer(projectionMatrix);
-		this.shadowMapRenderer = new ShadowMapMasterRenderer(camera);
+		this.shadowMapRenderer = new ShadowMapMasterRenderer(scene.getCamera());
 	}
 	
 	
@@ -77,24 +78,23 @@ public class MasterRenderer {
 		return projectionMatrix;
 	}
 	
-	public void renderScene(List<Entity> entities, List<Terrain> terrains, List<Entity> normalEntities, List<Light> lights,
-			Camera camera, Vector4f clippingPlane)
+	public void renderScene(Scene scene, Vector4f clippingPlane)
 	{
-		for (Terrain terrain:terrains)
+		for (Terrain terrain:scene.getTerrains())
 		{
 			processTerrain(terrain);
 		}
-		for (Entity entity:entities)
+		for (Entity entity:scene.getEntities())
 		{
 			processEntity(entity);
 		}
-		for (Entity entity:normalEntities)
+		for (Entity entity:scene.getNormalMappedEntities())
 		{
 			processNormalMappedEntity(entity);
 		}
 		
 		
-		render(lights, camera, clippingPlane);
+		render(scene.getLight(), scene.getCamera(), clippingPlane);
 	}
 	
 	public void render(List<Light> lights,Camera camera, Vector4f clippingPlane){
@@ -149,13 +149,13 @@ public class MasterRenderer {
 		}
 	}
 	
-	public void renderShadowMap(List<Entity> entityList, Light sun)
+	public void renderShadowMap(Scene scene)
 	{
-		for(Entity entity:entityList)
+		for(Entity entity:scene.getEntities())
 		{
 			processEntity(entity);
 		}
-		shadowMapRenderer.render(entities, sun);
+		shadowMapRenderer.render(entities, scene.getSun());
 		entities.clear();
 	}
 	

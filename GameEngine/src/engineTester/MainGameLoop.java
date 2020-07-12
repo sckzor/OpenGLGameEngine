@@ -30,6 +30,7 @@ import renderEngine.DisplayManager;
 import renderEngine.Loader;
 import renderEngine.MasterRenderer;
 import renderEngine.OBJLoader;
+import scene.Scene;
 import terrains.Terrain;
 import textures.ModelTexture;
 import textures.TerrainTexture;
@@ -53,18 +54,24 @@ import guis.GuiTexture;
 public class MainGameLoop {
 
 	public static void main(String[] args) {
-
+		Scene scene = new Scene();
+		
 		DisplayManager.createDisplay();
+		
 		AudioMaster.init();
 		AudioMaster.setListenerData(0, 0, 0);
+		
 		Loader loader = new Loader();
 		TextMaster.init(loader);
+		
 		RawModel bunny = OBJLoader.loadObjModel("bunny", loader);
 		TexturedModel staticBunny = new TexturedModel(bunny, new ModelTexture(loader.loadTexture("white", -0.4f)));
 		Player player = new Player(staticBunny, new Vector3f(400, 10, 400), 0, 180, 0, 0.6f);
 		player.addCollisionBox(new CollisionBox(new Vector3f(390, 0, 390),new Vector3f(410, 20, 410)));
-		Camera camera = new Camera(false, player);	
-		MasterRenderer renderer = new MasterRenderer(loader, camera);	
+		
+		scene.setCamera(new Camera(false, player));	
+		
+		MasterRenderer renderer = new MasterRenderer(loader, scene);	
 		ParticleMaster.init(loader, renderer.getProjectionMatrix()); 
 		
 		FontType font = new FontType(loader.loadTexture("arial", 0), new File("res/arial.fnt"));
@@ -76,7 +83,6 @@ public class MainGameLoop {
 		
 		GUIText PlayerZposition = new GUIText("Z: ---", 1, font, new Vector2f(0.05f, 0.09f), 0.1f, true);
 		PlayerZposition.setColour(1, 1, 1);
-		
 		
 		TerrainTexture backgroundTexture = new TerrainTexture(loader.loadTexture("grassy2", -0.4f));
 		TerrainTexture rTexture = new TerrainTexture(loader.loadTexture("mud", -0.4f));
@@ -104,10 +110,6 @@ public class MainGameLoop {
 		fernTexture.setNumberOfRows(2);
 		TexturedModel staticFern = new TexturedModel(fern, fernTexture);
 		staticFern.getTexture().setHasTrasparency(true);
-		
-		List<Entity> entities = new ArrayList<Entity>();
-		List<Entity> normalMappedEntities = new ArrayList<Entity>();
-		List<CubeMap> envMaps = new ArrayList<CubeMap>();
 
 		CubeMap enviroMap = new CubeMap(MasterRenderer.ENVIRO_MAP_SNOW, loader);	
 
@@ -117,7 +119,7 @@ public class MainGameLoop {
 		barrelModel.getTexture().setReflectivity(0.5f);
 		barrelModel.getTexture().setSpecularMap(loader.loadTexture("barrelS", -0.4f));
 		
-		normalMappedEntities.add(new Entity(barrelModel, new Vector3f(400, 10, 400), 0, 0, 0, 1f, false));
+		scene.addNormalMappedEntity(new Entity(barrelModel, new Vector3f(400, 10, 400), 0, 0, 0, 1f, false));
 		
 		
 		RawModel cherry = OBJLoader.loadObjModel("cherry", loader);
@@ -127,13 +129,11 @@ public class MainGameLoop {
 		
 		Terrain terrain = new Terrain(0, 0, loader, texturePack, blendMap, "heightmap");
 
-		List<Terrain> terrains = new ArrayList<Terrain>();
-		terrains.add(terrain);
+		scene.addTerrain(terrain);
 		
-		List<GuiTexture> guis = new ArrayList<GuiTexture>();
 		
 		GuiTexture gui = new GuiTexture(loader.loadTexture("cat", -0.4f), new Vector2f(0.5f, 0.5f), new Vector2f(0.25f, 0.25f));		
-		guis.add(gui);
+		scene.addGui(gui);
 		
 		GuiRenderer guiRenderer = new GuiRenderer(loader);
 		
@@ -144,34 +144,32 @@ public class MainGameLoop {
 			float y = terrain.getHeightOfTerrain(x, z);
 			Entity tree = new Entity(staticCherry, new Vector3f(x, y, z),0f,0f,0f,3f, false);
 			tree.addCollisionBox(new CollisionBox(new Vector3f(x-15, y-100, z-15), new Vector3f(x+15, y+100, z+15)));
-			entities.add(tree);
+			scene.addEntity(tree);
 			x = random.nextFloat()* 800;
 			z = random.nextFloat()* 800;
 			y = terrain.getHeightOfTerrain(x, z);
-			entities.add(new Entity(staticGrass, new Vector3f(x, y, z),0,0,0,1, false));
+			scene.addEntity(new Entity(staticGrass, new Vector3f(x, y, z),0,0,0,1, false));
 			x = random.nextFloat()* 800;
 			z = random.nextFloat()* 800;
 			y = terrain.getHeightOfTerrain(x, z);
-			entities.add(new Entity(staticFern, random.nextInt(4), new Vector3f(x, y, z),0,0,0,1, false));
+			scene.addEntity(new Entity(staticFern, random.nextInt(4), new Vector3f(x, y, z),0,0,0,1, false));
 		}
 		
-		Light sun = new Light(new Vector3f(1000000,1500000,-1000000),new Vector3f(1f,1f,1f));
-		List<Light> lights = new ArrayList<Light>();
-		lights.add(sun);
+		scene.setSun(new Light(new Vector3f(1000000,1500000,-1000000),new Vector3f(1f,1f,1f)));
 		Light light = new Light(new Vector3f(400,-8,400),new Vector3f(0f,2f,0f), new Vector3f(1f,0.01f,0.002f));
-		lights.add(light);
+		scene.addLight(light);
 		
-		entities.add(player);
+		scene.addEntity(player);
 		
 		
-		MousePicker picker = new MousePicker(camera, renderer.getProjectionMatrix(), terrain);
+		MousePicker picker = new MousePicker(scene, renderer.getProjectionMatrix(), terrain);
 		
 		WaterFrameBuffers fbos = new WaterFrameBuffers();
 		
 		WaterShader waterShader = new WaterShader();
 		WaterRenderer waterRenderer = new WaterRenderer(loader, waterShader, renderer.getProjectionMatrix(), fbos);
-		List<WaterTile> waters = new ArrayList<WaterTile>();
-		waters.add(new WaterTile(400, 400, -8));		
+		
+		scene.addWater(new WaterTile(400, 400, -8));		
 		
 		ParticleTexture particleTexture = new ParticleTexture(loader.loadTexture("fire", -0.4f), 8);
 		
@@ -190,34 +188,34 @@ public class MainGameLoop {
 		PostProcessing.init(loader);
 				
 		Entity lampPost = new Entity(staticlamp, new Vector3f(400,-8, 400), 0, 0, 0, 1, true);
-		entities.add(lampPost);
+		scene.addEntity(lampPost);
 		lampPost.playAudio("bounce", 1, 1, true);
 
 		
 		while(!Display.isCloseRequested()){
-			player.move(terrain, entities);
-			camera.move();
+			player.move(scene);
+			scene.getCamera().move();
 			picker.update();
 
 			
 			system.generateParticles();
 			
-			ParticleMaster.update(camera);
+			ParticleMaster.update(scene);
 						
-			renderer.renderShadowMap(entities, sun);
+			renderer.renderShadowMap(scene);
 			
 			GL11.glEnable(GL30.GL_CLIP_DISTANCE0);
 			
 			fbos.bindReflectionFrameBuffer();
-			float distance = 2 * (camera.getPosition().y - waters.get(0).getHeight()+1f);
-			camera.getPosition().y -= distance;
-			camera.invertPitch();
-			renderer.renderScene(entities, terrains, normalMappedEntities, lights, camera, new Vector4f(0, 1, 0, -waters.get(0).getHeight()));
-			camera.getPosition().y += distance;
-			camera.invertPitch();
+			float distance = 2 * (scene.getCamera().getPosition().y - scene.getWaters().get(0).getHeight()+1f);
+			scene.getCamera().getPosition().y -= distance;
+			scene.getCamera().invertPitch();
+			renderer.renderScene(scene, new Vector4f(0, 1, 0, -scene.getWaters().get(0).getHeight()));
+			scene.getCamera().getPosition().y += distance;
+			scene.getCamera().invertPitch();
 			
 			fbos.bindRefractionFrameBuffer();
-			renderer.renderScene(entities, terrains, normalMappedEntities, lights, camera, new Vector4f(0, -1, 0, waters.get(0).getHeight()+1));
+			renderer.renderScene(scene, new Vector4f(0, -1, 0, scene.getWaters().get(0).getHeight()+1));
 			
 			fbos.unbindCurrentFrameBuffer();
 			
@@ -230,16 +228,16 @@ public class MainGameLoop {
 			}
 
 			multisampleFbo.bindFrameBuffer();
-			renderer.renderScene(entities, terrains, normalMappedEntities, lights, camera, new Vector4f(0, -1, 0, 100000000));
-			waterRenderer.render(waters, camera, lights);
-			ParticleMaster.renderParticles(camera, false);
+			renderer.renderScene(scene, new Vector4f(0, -1, 0, 100000000));
+			waterRenderer.render(scene);
+			ParticleMaster.renderParticles(scene, false);
 			
 			multisampleFbo.unbindFrameBuffer();
 			multisampleFbo.resolveToFbo(GL30.GL_COLOR_ATTACHMENT0, outputFbo);
 			multisampleFbo.resolveToFbo(GL30.GL_COLOR_ATTACHMENT1, outputFbo2);
 			PostProcessing.doPostProcessing(outputFbo.getColourTexture(), outputFbo2.getColourTexture());
 			
-			guiRenderer.renderer(guis);
+			guiRenderer.render(scene);
 			PlayerXposition.setTextString("X: " + String.valueOf(player.getPosition().x));
 			PlayerYposition.setTextString("Y: " + String.valueOf(player.getPosition().y));
 			PlayerZposition.setTextString("Z: " + String.valueOf(player.getPosition().z));

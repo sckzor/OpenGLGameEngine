@@ -10,6 +10,7 @@ import audio.AudioMaster;
 import collisionBox.CollisionBox;
 import models.TexturedModel;
 import renderEngine.DisplayManager;
+import scene.Scene;
 import terrains.Terrain;
 
 public class Player extends Entity{
@@ -33,7 +34,7 @@ public class Player extends Entity{
 		super(model, position, rotX, rotY, rotZ, scale, false);
 	}
 	
-	public void move(Terrain terrain, List<Entity> entities)
+	public void move(Scene scene)
 	{		
 		checkInputs();
 		
@@ -44,7 +45,7 @@ public class Player extends Entity{
 		float dx = (float) (distance * Math.sin(Math.toRadians(super.getRotY())));
 		float dz = (float) (distance * Math.cos(Math.toRadians(super.getRotY())));
 		
-		if(super.hasCollided(entities) != null && !collided)
+		if(super.hasCollided(scene.getEntities()) != null && !collided)
 		{
 			collided = true;
 			collisionDx = dx;
@@ -66,7 +67,9 @@ public class Player extends Entity{
 		
 		upwardsSpeed += GRAVITY * DisplayManager.getFrameTimeSeconds();
 		super.increasePosition(0, upwardsSpeed * DisplayManager.getFrameTimeSeconds(), 0);
-		float terrainHeight = terrain.getHeightOfTerrain(super.getPosition().x, super.getPosition().z);
+		List<Terrain> terrains = scene.getTerrains();
+
+		float terrainHeight = terrains.get(0).getHeightOfTerrain(super.getPosition().x, super.getPosition().z);
 		if(super.getPosition().y<terrainHeight)
 		{
 			upwardsSpeed = 0;
