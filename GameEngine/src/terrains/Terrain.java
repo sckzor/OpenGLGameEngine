@@ -22,7 +22,7 @@ public class Terrain {
 	private static final int MAX_HEIGHT = 40;
 	private static final int MAX_PIXEL_COLOUR = 256*256*256;
 	
-	private static final int VERTEX_COUNT = 256;
+	private static final int VERTEX_COUNT = 16;
 	private static final int SEED = new Random().nextInt(1000000000);
 	
 	private float x;

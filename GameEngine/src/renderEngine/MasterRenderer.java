@@ -39,9 +39,6 @@ public class MasterRenderer {
 	public static final float GRADIENT = 5.0f;
 	
 	public static final String[] TEXTURE_FILES = {"right", "left", "top", "bottom", "back", "front"};
-	public static final String[] ENVIRO_MAP_SNOW = {"cposx", "cnegx", "cposy", "cnegy", "cposz", "cnegz"};
-	public static final String[] ENVIRO_MAP_LAKE = {"posx", "negx", "posy", "negy", "posz", "negz"};
-	public static final String[] ENVIRO_MAP_INSIDE = {"lposx", "lnegx", "lposy", "lnegy", "lposz", "lnegz"};
 	
 	private Matrix4f projectionMatrix;
 	
@@ -93,12 +90,11 @@ public class MasterRenderer {
 			processNormalMappedEntity(entity);
 		}
 		
-		
+		prepare();
 		render(scene.getLight(), scene.getCamera(), clippingPlane);
 	}
 	
 	public void render(List<Light> lights,Camera camera, Vector4f clippingPlane){
-		prepare();
 		shader.start();
 		shader.loadClippingPlane(clippingPlane);
 		shader.loadSkyColour(RED, GREEN, BLUE);
@@ -172,6 +168,18 @@ public class MasterRenderer {
 	}
 	
 	public void prepare() {
+		GL11.glPolygonMode( GL11.GL_FRONT_AND_BACK, GL11.GL_FILL );
+		GL11.glEnable(GL11.GL_DEPTH_TEST);
+		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+		GL11.glClearColor(RED, GREEN, BLUE, 1);
+		GL13.glActiveTexture(GL13.GL_TEXTURE5);
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, getShadowMapTexture());
+	}
+	
+	public void prepareOpposite() {
+		GL11.glEnable( GL11.GL_POLYGON_OFFSET_FILL );
+		GL11.glPolygonOffset( -2.5f, -2.5f );
+		GL11.glPolygonMode( GL11.GL_FRONT_AND_BACK, GL11.GL_LINE );
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
 		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 		GL11.glClearColor(RED, GREEN, BLUE, 1);

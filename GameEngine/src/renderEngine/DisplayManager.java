@@ -20,21 +20,27 @@ public class DisplayManager {
 	
 	private static final int WIDTH = 1280;
 	private static final int HEIGHT = 720;
-	private static final int FPS_CAP = 120;
+	private static final int FPS_CAP = 30;
 	
 	private static long lastFrameTime;
 	private static float delta;
 	
 	
-	public static void createDisplay(){		
+	public static void createDisplay(Boolean fullscreen){		
 		ContextAttribs attribs = new ContextAttribs(3,3)
 		.withForwardCompatible(true)
 		.withProfileCore(true);
 		
 		try {
-			Display.setDisplayMode(new DisplayMode(WIDTH,HEIGHT));
+			if(fullscreen)
+			{
+				Display.setDisplayModeAndFullscreen(Display.getDesktopDisplayMode());
+			}else {
+				Display.setDisplayMode(new DisplayMode(WIDTH,HEIGHT));
+			}
+			Display.setFullscreen(true);
 			Display.create(new PixelFormat().withDepthBits(24), attribs);
-			Display.setTitle("Our First Display!");			
+			Display.setTitle("Epic Game!");			
 			GL11.glEnable(GL13.GL_MULTISAMPLE);
 		} catch (LWJGLException e) {
 			e.printStackTrace();

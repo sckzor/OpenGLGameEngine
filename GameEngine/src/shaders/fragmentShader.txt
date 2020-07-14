@@ -21,6 +21,8 @@ uniform vec3 skyColour;
 uniform sampler2D shadowMap;
 uniform float mapSize;
 
+const float levels = 3;
+
 const int pcfCount = 2;
 const float totalTexels = (pcfCount + 2.0 + 1) * (pcfCount + 2.0 + 1);
 
@@ -54,6 +56,10 @@ void main(void){
 		vec3 unitLightVector = normalize(toLightVector[i]);
 		float nDotl = dot(unitNormal,unitLightVector);
 		float brightness = max(nDotl,0.0);
+		
+		float level = floor(brightness * levels);
+		brightness = level/levels;
+		
 		vec3 lightDirection = -unitLightVector;
 		vec3 reflectedLightDirection = reflect(lightDirection,unitNormal);
 		float specularFactor = dot(reflectedLightDirection , unitVectorToCamera);

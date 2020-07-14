@@ -56,7 +56,7 @@ public class MainGameLoop {
 	public static void main(String[] args) {
 		Scene scene = new Scene();
 		
-		DisplayManager.createDisplay();
+		DisplayManager.createDisplay(false);
 		
 		AudioMaster.init();
 		AudioMaster.setListenerData(0, 0, 0);
@@ -110,8 +110,6 @@ public class MainGameLoop {
 		fernTexture.setNumberOfRows(2);
 		TexturedModel staticFern = new TexturedModel(fern, fernTexture);
 		staticFern.getTexture().setHasTrasparency(true);
-
-		CubeMap enviroMap = new CubeMap(MasterRenderer.ENVIRO_MAP_SNOW, loader);	
 
 		TexturedModel barrelModel = new TexturedModel(NormalMappedObjLoader.loadOBJ("barrel", loader), new ModelTexture(loader.loadTexture("barrel", -0.4f)));
 		barrelModel.getTexture().setNormalMap(loader.loadTexture("barrelNormal", -0.4f));
