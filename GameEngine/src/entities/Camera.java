@@ -24,6 +24,11 @@ public class Camera {
 	
 	private Matrix4f projectionMatrix = new Matrix4f();
 	private Matrix4f viewMatrix = new Matrix4f();
+	
+	public Matrix4f getViewMatrix() {
+		return viewMatrix;
+	}
+
 	private Matrix4f projectionViewMatrix = new Matrix4f();
 	
 	public Camera(boolean doCubeMap, Player player){

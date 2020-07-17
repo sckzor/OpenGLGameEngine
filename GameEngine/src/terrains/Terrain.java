@@ -21,7 +21,7 @@ public class Terrain {
 	
 	private static final float SIZE = 800;
 	private static final int MAX_HEIGHT = 40;
-	private static final int MAX_PIXEL_COLOUR = 256;
+	private static final int MAX_PIXEL_COLOUR = 256*256*256;
 	
 	private static final int VERTEX_COUNT = 16;
 	private static final int SEED = new Random().nextInt(1000000000);
@@ -190,17 +190,10 @@ public class Terrain {
 		{
 			return 0;
 		}
-		Color color = new Color(image.getRGB(x, z));
-		float height = color.getRed();
-		boolean discard = color.getGreen() > MAX_PIXEL_COLOUR * 0.5;
-		if(discard) {
-			return 0;
-		}else {
-			height += MAX_PIXEL_COLOUR/2f;
-			height /= MAX_PIXEL_COLOUR/2f;
-			height *= MAX_HEIGHT;
-			return height;
-		}
-
+		float height = image.getRGB(x, z);
+		height += MAX_PIXEL_COLOUR/2f;
+		height /= MAX_PIXEL_COLOUR/2f;
+		height *= MAX_HEIGHT;
+		return height;
 	}
 }

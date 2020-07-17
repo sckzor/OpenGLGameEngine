@@ -62,6 +62,9 @@ import fontRendering.TextMaster;
 import guis.GuiRenderer;
 import guis.GuiTexture;
 import guis.Menu;
+import lensFlare.FlareMaster;
+import lensFlare.FlareRenderer;
+import lensFlare.FlareTexture;
 
 public class MainGameLoop {	
 	public static void main(String[] args) {
@@ -72,12 +75,13 @@ public class MainGameLoop {
 		AudioMaster.init();
 		AudioMaster.setListenerData(0, 0, 0);
 		
+		
 		Loader loader = new Loader();
 		TextMaster.init(loader);
 		
 		RawModel bunny = OBJLoader.loadObjModel("bunny", loader);
 		TexturedModel staticBunny = new TexturedModel(bunny, new ModelTexture(loader.loadTexture("white", -0.4f)));
-		Player player = new Player(staticBunny, new Vector3f(400, 10, 400), 0, 180, 0, 0.6f);
+		Player player = new Player(staticBunny, new Vector3f(400, 10, 400), 0, 180, 0, 0.4f);
 		player.addCollisionBox(new CollisionBox(new Vector3f(390, 0, 390),new Vector3f(410, 20, 410)));
 		
 		scene.setCamera(new Camera(false, player));	
@@ -143,7 +147,7 @@ public class MainGameLoop {
 		staticGrass.getTexture().setHasTrasparency(true);
 		barrelModel.getTexture().setSpecularMap(loader.loadTexture("cherryS", -0.4f));
 		
-		Terrain terrain = new Terrain(0, 0, loader, texturePack, blendMap, "lowPolyHeightMap");
+		Terrain terrain = new Terrain(0, 0, loader, texturePack, blendMap, "heightmap");
 
 		scene.addTerrain(terrain);
 		
@@ -159,14 +163,12 @@ public class MainGameLoop {
 		pauseMenu.addGui(toggelFullscreen);
 		pauseMenu.addGui(quit);
 		pauseMenu.addGui(menu);
-
 		
 		GuiRenderer guiRenderer = new GuiRenderer(loader);
 		
 		Random random = new Random();
 		
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss");  
-
 		
 		for(int i=0;i<200;i++){
 			float x = random.nextFloat()* 800;
@@ -205,7 +207,11 @@ public class MainGameLoop {
 		WaterShader waterShader = new WaterShader();
 		WaterRenderer waterRenderer = new WaterRenderer(loader, waterShader, scene.getRenderer().getProjectionMatrix(), fbos);
 		
-		scene.addWater(new WaterTile(340, 118, 340));		
+		for(int x = 0; x<4; x++) {
+			for(int y = 0; y<4; y++) {
+				scene.addWater(new WaterTile(x*200 + 100, -6, y*200 + 100));
+			}
+		}
 		
 		ParticleTexture particleTexture = new ParticleTexture(loader.loadTexture("fire", -0.4f), 8);
 		
@@ -227,7 +233,7 @@ public class MainGameLoop {
 		scene.addEntity(lampPost);
 		lampPost.playAudio("bounce", 1, 1, true);
 
-		pauseMenu.enableRendering();
+		//pauseMenu.enableRendering();
 		
 		while(!Display.isCloseRequested()){
 			player.move(scene);
@@ -235,7 +241,7 @@ public class MainGameLoop {
 			picker.update();
 		    			
 			system.generateParticles();
-			
+						
 			if(Keyboard.isKeyDown(Keyboard.KEY_ESCAPE)) {
 				if(!pauseMenu.getRenderState()) {
 					pauseMenu.enableRendering();

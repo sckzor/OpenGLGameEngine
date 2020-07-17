@@ -8,6 +8,7 @@ import entities.Entity;
 import entities.Light;
 import environmentMapRenderer.CubeMap;
 import guis.GuiTexture;
+import lensFlare.FlareTexture;
 import renderEngine.Loader;
 import renderEngine.MasterRenderer;
 import terrains.Terrain;
@@ -21,6 +22,7 @@ public class Scene {
 	private List<GuiTexture> guis = new ArrayList<GuiTexture>();
 	private List<WaterTile> waters = new ArrayList<WaterTile>();
 	private List<Light> lights = new ArrayList<Light>();
+	private List<FlareTexture> flares = new ArrayList<FlareTexture>();
 	private Light sun;
 	private Camera camera;
 	private Loader loader = new Loader();
@@ -173,5 +175,20 @@ public class Scene {
 
 	public void setRenderer(MasterRenderer renderer) {
 		this.renderer = renderer;
+	}
+
+	//---------------------------- LensFlare ----------------------------\\
+	
+	public void addFlare(FlareTexture flare)
+	{
+		flares.add(flare);
+	}
+	
+	public List<FlareTexture> getFlares() {
+		return flares;
+	}
+
+	public void setFlares(List<FlareTexture> flares) {
+		this.flares = flares;
 	}
 }
