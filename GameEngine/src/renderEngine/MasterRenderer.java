@@ -31,9 +31,9 @@ public class MasterRenderer {
 	public static final float NEAR_PLANE = 0.1f;
 	public static final float FAR_PLANE = 1000;
 	
-	public static final float RED = 0.5f;
-	public static final float GREEN = 0.5f;
-	public static final float BLUE = 0.5f;
+	public static final float RED = 0.8f;
+	public static final float GREEN = 0.8f;
+	public static final float BLUE = 0.8f;
 	
 	public static final float DENSITY = 0.003f;
 	public static final float GRADIENT = 5.0f;
@@ -145,13 +145,13 @@ public class MasterRenderer {
 		}
 	}
 	
-	public void renderShadowMap(Scene scene)
+	public void renderShadowMap(Scene scene, Light sun)
 	{
 		for(Entity entity:scene.getEntities())
 		{
 			processEntity(entity);
 		}
-		shadowMapRenderer.render(entities, scene.getSun());
+		shadowMapRenderer.render(entities, sun);
 		entities.clear();
 	}
 	

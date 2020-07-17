@@ -9,6 +9,7 @@ import entities.Light;
 import environmentMapRenderer.CubeMap;
 import guis.GuiTexture;
 import renderEngine.Loader;
+import renderEngine.MasterRenderer;
 import terrains.Terrain;
 import water.WaterTile;
 
@@ -23,6 +24,7 @@ public class Scene {
 	private Light sun;
 	private Camera camera;
 	private Loader loader = new Loader();
+	private MasterRenderer renderer;
 
 	
 	//---------------------------- Entities ----------------------------\\
@@ -161,5 +163,15 @@ public class Scene {
 
 	public void setLoader(Loader loader) {
 		this.loader = loader;
+	}
+	
+	//----------------------------- Renderer ----------------------------\\
+
+	public MasterRenderer getRenderer() {
+		return renderer;
+	}
+
+	public void setRenderer(MasterRenderer renderer) {
+		this.renderer = renderer;
 	}
 }

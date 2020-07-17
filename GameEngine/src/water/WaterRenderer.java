@@ -10,6 +10,7 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.Vector4f;
 
 import renderEngine.DisplayManager;
 import renderEngine.Loader;
@@ -96,6 +97,24 @@ public class WaterRenderer {
 		// Just x and z vectex positions here, y is set to 0 in v.shader
 		float[] vertices = { -1, -1, -1, 1, 1, -1, 1, -1, -1, 1, 1, 1 };
 		quad = loader.loadToVAO(vertices, 2);
+	}
+	
+	public void reflectOffWater(Scene scene)
+	{
+		GL11.glEnable(GL30.GL_CLIP_DISTANCE0);
+		
+		fbos.bindReflectionFrameBuffer();
+		float distance = 2 * (scene.getCamera().getPosition().y - scene.getWaters().get(0).getHeight()+1f);
+		scene.getCamera().getPosition().y -= distance;
+		scene.getCamera().invertPitch();
+		scene.getRenderer().renderScene(scene, new Vector4f(0, 1, 0, -scene.getWaters().get(0).getHeight()));
+		scene.getCamera().getPosition().y += distance;
+		scene.getCamera().invertPitch();
+		
+		fbos.bindRefractionFrameBuffer();
+		scene.getRenderer().renderScene(scene, new Vector4f(0, -1, 0, scene.getWaters().get(0).getHeight()+1));
+		
+		fbos.unbindCurrentFrameBuffer();
 	}
 
 }

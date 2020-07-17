@@ -1,9 +1,18 @@
 package engineTester;
 
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import javax.imageio.ImageIO;
 
 import models.RawModel;
 import models.TexturedModel;
@@ -16,12 +25,14 @@ import postProcessing.Fbo;
 import postProcessing.PostProcessing;
 
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
+import org.newdawn.slick.opengl.ImageIOImageData;
 
 import audio.AudioMaster;
 import audio.Source;
@@ -50,13 +61,13 @@ import fontMeshCreator.GUIText;
 import fontRendering.TextMaster;
 import guis.GuiRenderer;
 import guis.GuiTexture;
+import guis.Menu;
 
-public class MainGameLoop {
-
+public class MainGameLoop {	
 	public static void main(String[] args) {
 		Scene scene = new Scene();
 		
-		DisplayManager.createDisplay(false);
+		DisplayManager.createDisplay(false, DisplayManager.WIDTH, DisplayManager.HEIGHT);
 		
 		AudioMaster.init();
 		AudioMaster.setListenerData(0, 0, 0);
@@ -70,19 +81,26 @@ public class MainGameLoop {
 		player.addCollisionBox(new CollisionBox(new Vector3f(390, 0, 390),new Vector3f(410, 20, 410)));
 		
 		scene.setCamera(new Camera(false, player));	
+		scene.setRenderer(new MasterRenderer(loader, scene));
 		
-		MasterRenderer renderer = new MasterRenderer(loader, scene);	
-		ParticleMaster.init(loader, renderer.getProjectionMatrix()); 
+		ParticleMaster.init(loader, scene.getRenderer().getProjectionMatrix()); 
 		
 		FontType font = new FontType(loader.loadTexture("arial", 0), new File("res/arial.fnt"));
-		GUIText PlayerXposition = new GUIText("X: ---", 1, font, new Vector2f(0.05f, 0.05f), 0.1f, true);
+		
+		GUIText Time = new GUIText("--:--", 1, font, new Vector2f(0.02f, 0.03f), 0.2f, true);
+		Time.setColour(1, 1, 1);
+		
+		GUIText PlayerXposition = new GUIText("X: ---", 1, font, new Vector2f(0.02f, 0.05f), 0.2f, true);
 		PlayerXposition.setColour(1, 1, 1);
 		
-		GUIText PlayerYposition = new GUIText("Y: ---", 1, font, new Vector2f(0.05f, 0.07f), 0.1f, true);
+		GUIText PlayerYposition = new GUIText("Y: ---", 1, font, new Vector2f(0.02f, 0.07f), 0.2f, true);
 		PlayerYposition.setColour(1, 1, 1);
 		
-		GUIText PlayerZposition = new GUIText("Z: ---", 1, font, new Vector2f(0.05f, 0.09f), 0.1f, true);
+		GUIText PlayerZposition = new GUIText("Z: ---", 1, font, new Vector2f(0.02f, 0.09f), 0.2f, true);
 		PlayerZposition.setColour(1, 1, 1);
+		
+		GUIText FPS = new GUIText("FPS: --", 1, font, new Vector2f(0.02f, 0.11f), 0.2f, true);
+		FPS.setColour(1, 1, 1);
 		
 		TerrainTexture backgroundTexture = new TerrainTexture(loader.loadTexture("grassy2", -0.4f));
 		TerrainTexture rTexture = new TerrainTexture(loader.loadTexture("mud", -0.4f));
@@ -117,7 +135,7 @@ public class MainGameLoop {
 		barrelModel.getTexture().setReflectivity(0.5f);
 		barrelModel.getTexture().setSpecularMap(loader.loadTexture("barrelS", -0.4f));
 		
-		scene.addNormalMappedEntity(new Entity(barrelModel, new Vector3f(400, 10, 400), 0, 0, 0, 1f, false));
+		scene.addNormalMappedEntity(new Entity(barrelModel, new Vector3f(400, 120, 400), 0, 0, 0, 1f, false));
 		
 		
 		RawModel cherry = OBJLoader.loadObjModel("cherry", loader);
@@ -125,32 +143,52 @@ public class MainGameLoop {
 		staticGrass.getTexture().setHasTrasparency(true);
 		barrelModel.getTexture().setSpecularMap(loader.loadTexture("cherryS", -0.4f));
 		
-		Terrain terrain = new Terrain(0, 0, loader, texturePack, blendMap, "heightmap");
+		Terrain terrain = new Terrain(0, 0, loader, texturePack, blendMap, "lowPolyHeightMap");
 
 		scene.addTerrain(terrain);
 		
+		int toggleTexture = loader.loadTexture("toggleFullscreen", -0.4f);
+		GuiTexture toggelFullscreen = new GuiTexture(toggleTexture, new Vector2f(0.1f, 0f), new Vector2f(0.2f, 0.1f));	
+		int quitTexture = loader.loadTexture("quit", -0.4f);
+		GuiTexture quit = new GuiTexture(quitTexture, new Vector2f(0.1f, -0.2f), new Vector2f(0.2f, 0.1f));	
+		int menuTexture = loader.loadTexture("menu", -0.4f);
+		GuiTexture menu = new GuiTexture(menuTexture, new Vector2f(0.1f, 0.2f), new Vector2f(0.2f, 0.1f));	
+
+		Menu pauseMenu = new Menu(scene);
 		
-		GuiTexture gui = new GuiTexture(loader.loadTexture("cat", -0.4f), new Vector2f(0.5f, 0.5f), new Vector2f(0.25f, 0.25f));		
-		scene.addGui(gui);
+		pauseMenu.addGui(toggelFullscreen);
+		pauseMenu.addGui(quit);
+		pauseMenu.addGui(menu);
+
 		
 		GuiRenderer guiRenderer = new GuiRenderer(loader);
 		
 		Random random = new Random();
+		
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss");  
+
+		
 		for(int i=0;i<200;i++){
 			float x = random.nextFloat()* 800;
 			float z = random.nextFloat()* 800;
 			float y = terrain.getHeightOfTerrain(x, z);
+			if(terrain.getHeightOfTerrain(x, z) != 0) {
 			Entity tree = new Entity(staticCherry, new Vector3f(x, y, z),0f,0f,0f,3f, false);
-			tree.addCollisionBox(new CollisionBox(new Vector3f(x-15, y-100, z-15), new Vector3f(x+15, y+100, z+15)));
-			scene.addEntity(tree);
+				tree.addCollisionBox(new CollisionBox(new Vector3f(x-15, y-100, z-15), new Vector3f(x+15, y+100, z+15)));
+				scene.addEntity(tree);
+			}
 			x = random.nextFloat()* 800;
 			z = random.nextFloat()* 800;
 			y = terrain.getHeightOfTerrain(x, z);
-			scene.addEntity(new Entity(staticGrass, new Vector3f(x, y, z),0,0,0,1, false));
+			if(terrain.getHeightOfTerrain(x, z) != 0) {
+				scene.addEntity(new Entity(staticGrass, new Vector3f(x, y, z),0,0,0,1, false));
+			}
 			x = random.nextFloat()* 800;
 			z = random.nextFloat()* 800;
 			y = terrain.getHeightOfTerrain(x, z);
-			scene.addEntity(new Entity(staticFern, random.nextInt(4), new Vector3f(x, y, z),0,0,0,1, false));
+			if(terrain.getHeightOfTerrain(x, z) != 0) {
+				scene.addEntity(new Entity(staticFern, random.nextInt(4), new Vector3f(x, y, z),0,0,0,1, false));
+			}
 		}
 		
 		scene.setSun(new Light(new Vector3f(1000000,1500000,-1000000),new Vector3f(1f,1f,1f)));
@@ -160,14 +198,14 @@ public class MainGameLoop {
 		scene.addEntity(player);
 		
 		
-		MousePicker picker = new MousePicker(scene, renderer.getProjectionMatrix(), terrain);
+		MousePicker picker = new MousePicker(scene, scene.getRenderer().getProjectionMatrix(), terrain);
 		
 		WaterFrameBuffers fbos = new WaterFrameBuffers();
 		
 		WaterShader waterShader = new WaterShader();
-		WaterRenderer waterRenderer = new WaterRenderer(loader, waterShader, renderer.getProjectionMatrix(), fbos);
+		WaterRenderer waterRenderer = new WaterRenderer(loader, waterShader, scene.getRenderer().getProjectionMatrix(), fbos);
 		
-		scene.addWater(new WaterTile(400, 400, -8));		
+		scene.addWater(new WaterTile(340, 118, 340));		
 		
 		ParticleTexture particleTexture = new ParticleTexture(loader.loadTexture("fire", -0.4f), 8);
 		
@@ -189,44 +227,67 @@ public class MainGameLoop {
 		scene.addEntity(lampPost);
 		lampPost.playAudio("bounce", 1, 1, true);
 
+		pauseMenu.enableRendering();
 		
 		while(!Display.isCloseRequested()){
 			player.move(scene);
 			scene.getCamera().move();
 			picker.update();
-
-			
+		    			
 			system.generateParticles();
+			
+			if(Keyboard.isKeyDown(Keyboard.KEY_ESCAPE)) {
+				if(!pauseMenu.getRenderState()) {
+					pauseMenu.enableRendering();
+				}else
+				{
+					pauseMenu.disableRendering();
+				}
+			}
+			
+			if(pauseMenu.getRenderState()) {
+				if(toggelFullscreen.hasBeenClicked())
+				{
+					if(DisplayManager.isFullscreen())
+					{
+						DisplayManager.setScreenResolution(false, DisplayManager.WIDTH, DisplayManager.HEIGHT);
+					} else if (!DisplayManager.isFullscreen())
+					{
+						DisplayManager.setScreenResolution(true, DisplayManager.WIDTH, DisplayManager.HEIGHT);
+					}
+				}
+				if(quit.hasBeenClicked())
+				{
+					break;
+				}
+			}
 			
 			ParticleMaster.update(scene);
 						
-			renderer.renderShadowMap(scene);
+			scene.getRenderer().renderShadowMap(scene, scene.getSun());
 			
-			GL11.glEnable(GL30.GL_CLIP_DISTANCE0);
-			
-			fbos.bindReflectionFrameBuffer();
-			float distance = 2 * (scene.getCamera().getPosition().y - scene.getWaters().get(0).getHeight()+1f);
-			scene.getCamera().getPosition().y -= distance;
-			scene.getCamera().invertPitch();
-			renderer.renderScene(scene, new Vector4f(0, 1, 0, -scene.getWaters().get(0).getHeight()));
-			scene.getCamera().getPosition().y += distance;
-			scene.getCamera().invertPitch();
+			waterRenderer.reflectOffWater(scene);
 			
 			fbos.bindRefractionFrameBuffer();
-			renderer.renderScene(scene, new Vector4f(0, -1, 0, scene.getWaters().get(0).getHeight()+1));
+			scene.getRenderer().renderScene(scene, new Vector4f(0, -1, 0, scene.getWaters().get(0).getHeight()+1));
 			
 			fbos.unbindCurrentFrameBuffer();
 			
 			Vector3f terrainPoint = picker.getCurrentTerrainPoint();
 			
+			
 			if(terrainPoint!=null)
 			{
 				lampPost.setPosition(terrainPoint);
 				light.setPosition(new Vector3f(terrainPoint.x, terrainPoint.y+9, terrainPoint.z));
+				if(Mouse.isButtonDown(0)){
+					scene.addLight(new Light(new Vector3f(terrainPoint.x, terrainPoint.y+9, terrainPoint.z),new Vector3f(0f,2f,0f), new Vector3f(1f,0.01f,0.002f)));
+					scene.addEntity(new Entity(staticlamp, new Vector3f(terrainPoint.x, terrainPoint.y, terrainPoint.z), 0, 0, 0, 1, true));
+				}
 			}
 
 			multisampleFbo.bindFrameBuffer();
-			renderer.renderScene(scene, new Vector4f(0, -1, 0, 100000000));
+			scene.getRenderer().renderScene(scene, new Vector4f(0, -1, 0, 100000000));
 			waterRenderer.render(scene);
 			ParticleMaster.renderParticles(scene, false);
 			
@@ -239,6 +300,10 @@ public class MainGameLoop {
 			PlayerXposition.setTextString("X: " + String.valueOf(player.getPosition().x));
 			PlayerYposition.setTextString("Y: " + String.valueOf(player.getPosition().y));
 			PlayerZposition.setTextString("Z: " + String.valueOf(player.getPosition().z));
+			FPS.setTextString("FPS: " + DisplayManager.getFPS());
+			
+			LocalDateTime now = LocalDateTime.now();  			
+			Time.setTextString(dtf.format(now));
 
 			TextMaster.render();
 			
@@ -254,7 +319,7 @@ public class MainGameLoop {
 		fbos.cleanUp();
 		waterShader.cleanUp();
 		guiRenderer.cleanUp();
-		renderer.cleanUp();
+		scene.getRenderer().cleanUp();
 		loader.cleanUp();
 		DisplayManager.closeDisplay();
 		AudioMaster.cleanUp();

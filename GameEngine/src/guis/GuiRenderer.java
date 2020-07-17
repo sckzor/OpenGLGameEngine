@@ -25,7 +25,6 @@ public class GuiRenderer {
 		shader = new GuiShader();
 	}
 	
-	@SuppressWarnings("unused")
 	public void render(Scene scene)
 	{
 		shader.start();

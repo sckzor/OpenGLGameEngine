@@ -72,7 +72,7 @@ public class TerrainShader extends ShaderProgram{
 		location_shadowDistance = super.getUniformLocation("shadowDistance");
 		location_density = super.getUniformLocation("density");
 		location_gradient = super.getUniformLocation("gradient");
-		
+
 		location_lightPosition = new int[MAX_LIGHTS];
 		location_lightColour = new int[MAX_LIGHTS];
 		location_attenuation = new int[MAX_LIGHTS];
@@ -148,7 +148,6 @@ public class TerrainShader extends ShaderProgram{
 			}
 		}
 	}
-	
 	
 	public void loadViewMatrix(Camera camera){
 		Matrix4f viewMatrix = Maths.createViewMatrix(camera);

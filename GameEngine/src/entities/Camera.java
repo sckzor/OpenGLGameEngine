@@ -155,7 +155,7 @@ public class Camera {
 	
 	private void calculatePitch()
 	{
-		if(Mouse.isButtonDown(1)) 
+		if(Mouse.isButtonDown(2))
 		{
 			float pitchChange = Mouse.getDY() * 0.1f;
 			pitch -= pitchChange;
@@ -164,7 +164,7 @@ public class Camera {
 	
 	private void calculateAngleAroundPlayer()
 	{
-		if(Mouse.isButtonDown(0))
+		if(Mouse.isButtonDown(1))
 		{
 			float angleChange = Mouse.getDX() * 0.3f;
 			angleAroundPlayer -= angleChange;

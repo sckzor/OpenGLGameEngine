@@ -1,6 +1,9 @@
 package guis;
 
+import org.lwjgl.input.Mouse;
 import org.lwjgl.util.vector.Vector2f;
+
+import renderEngine.DisplayManager;
 
 public class GuiTexture {
 
@@ -15,6 +18,11 @@ public class GuiTexture {
 		this.scale = scale;
 	}
 	
+	public void setTexture(int texture)
+	{
+		this.texture = texture;
+	}
+	
 	public int getTexture() {
 		return texture;
 	}
@@ -25,5 +33,28 @@ public class GuiTexture {
 	
 	public Vector2f getScale() {
 		return scale;
+	}
+	
+	public boolean hasBeenClicked()
+	{
+		float screenX = Mouse.getX();
+		float screenY = Mouse.getY();
+		if(Mouse.isButtonDown(0)) {
+
+			screenX /= DisplayManager.getWidth()/2f;
+			screenX -= 1;
+			screenY /= DisplayManager.getHeight()/2f;
+			screenY -= 1;		
+		}
+		
+		if(screenX <= positions.x + (scale.x) && screenY <= positions.y + (scale.y)
+				&& screenX >= positions.x - (scale.x) && screenY >= positions.y - (scale.y) && Mouse.isButtonDown(0))
+		{
+			return true;
+		}else
+		{
+			return false;
+			
+		}
 	}
 }

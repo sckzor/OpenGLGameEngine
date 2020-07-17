@@ -1,5 +1,6 @@
 package terrains;
 
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -20,7 +21,7 @@ public class Terrain {
 	
 	private static final float SIZE = 800;
 	private static final int MAX_HEIGHT = 40;
-	private static final int MAX_PIXEL_COLOUR = 256*256*256;
+	private static final int MAX_PIXEL_COLOUR = 256;
 	
 	private static final int VERTEX_COUNT = 16;
 	private static final int SEED = new Random().nextInt(1000000000);
@@ -108,7 +109,7 @@ public class Terrain {
 			e.printStackTrace();
 		}
 		
-		int VERTEX_COUNT = 128;
+		int VERTEX_COUNT = image.getHeight();
 		heights = new float[VERTEX_COUNT][VERTEX_COUNT];
 		int count = VERTEX_COUNT * VERTEX_COUNT;
 		float[] vertices = new float[count * 3];
@@ -118,20 +119,24 @@ public class Terrain {
 		int vertexPointer = 0;
 		for(int i=0;i<VERTEX_COUNT;i++){
 			for(int j=0;j<VERTEX_COUNT;j++){
+				float height = getHeightMapHeight(j, i, image);
 				vertices[vertexPointer*3] = (float)j/((float)VERTEX_COUNT - 1) * SIZE;
-				float height = getHeight(j, i, generator);
 				heights[j][i] = height;
-				vertices[vertexPointer*3+1] = getHeight(j, i, generator);
+				vertices[vertexPointer*3+1] = getHeightMapHeight(j, i, image);
 				vertices[vertexPointer*3+2] = (float)i/((float)VERTEX_COUNT - 1) * SIZE;
-				Vector3f normal = calculateNormal(j, i, generator);
+				Vector3f normal = calculateNormalHeightMap(j, i, image);
 				normals[vertexPointer*3] = normal.x;
 				normals[vertexPointer*3+1] = normal.y;
 				normals[vertexPointer*3+2] = normal.z;
 				textureCoords[vertexPointer*2] = (float)j/((float)VERTEX_COUNT - 1);
 				textureCoords[vertexPointer*2+1] = (float)i/((float)VERTEX_COUNT - 1);
 				vertexPointer++;
+
+				
+
 			}
 		}
+		
 		int pointer = 0;
 		for(int gz=0;gz<VERTEX_COUNT-1;gz++){
 			for(int gx=0;gx<VERTEX_COUNT-1;gx++){
@@ -162,8 +167,40 @@ public class Terrain {
 		return normal;
 	}
 	
+	private Vector3f calculateNormalHeightMap(int x, int z, BufferedImage image)
+	{
+		float heightL = getHeightMapHeight(x-1, z, image);
+		float heightR = getHeightMapHeight(x+1, z, image);
+		float heightD = getHeightMapHeight(x, z-1, image);
+		float heightU = getHeightMapHeight(x, z+1, image);
+		
+		Vector3f normal = new Vector3f(heightL-heightR, 2f, heightD-heightU);
+		normal.normalise();
+		return normal;
+	}
+	
 	private float getHeight(int x, int z, HeightsGenerator generator)
 	{
 		return generator.generateHeight(x, z);
+	}
+	
+	private float getHeightMapHeight(int x, int z, BufferedImage image)
+	{
+		if(x<0 || x>=image.getHeight() || z<0 || z>=image.getHeight())
+		{
+			return 0;
+		}
+		Color color = new Color(image.getRGB(x, z));
+		float height = color.getRed();
+		boolean discard = color.getGreen() > MAX_PIXEL_COLOUR * 0.5;
+		if(discard) {
+			return 0;
+		}else {
+			height += MAX_PIXEL_COLOUR/2f;
+			height /= MAX_PIXEL_COLOUR/2f;
+			height *= MAX_HEIGHT;
+			return height;
+		}
+
 	}
 }
