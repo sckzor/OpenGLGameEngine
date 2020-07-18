@@ -22,3 +22,5 @@ Functionality includes the ability to:
 A photo of the engine rendering a test scene
 
 ![A photo of the engine](https://iili.io/dqA5f1.png)
+
+Total time spent ~2 months
