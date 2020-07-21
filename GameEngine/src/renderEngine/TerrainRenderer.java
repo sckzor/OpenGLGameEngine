@@ -47,6 +47,8 @@ public class TerrainRenderer {
 		GL20.glEnableVertexAttribArray(0);
 		GL20.glEnableVertexAttribArray(1);
 		GL20.glEnableVertexAttribArray(2);
+		GL20.glEnableVertexAttribArray(3);
+		GL20.glEnableVertexAttribArray(4);
 		bindTextures(terrain);
 		shader.loadMapSizeTransitionDistance(ShadowMapMasterRenderer.SHADOW_MAP_SIZE, ShadowBox.TRASITION_DISTANCE, ShadowBox.SHADOW_DISTANCE);
 		shader.loadShineVariables(1, 0);
@@ -71,6 +73,8 @@ public class TerrainRenderer {
 		GL20.glDisableVertexAttribArray(0);
 		GL20.glDisableVertexAttribArray(1);
 		GL20.glDisableVertexAttribArray(2);
+		GL20.glDisableVertexAttribArray(3);
+		GL20.glDisableVertexAttribArray(4);
 		GL30.glBindVertexArray(0);
 	}
 

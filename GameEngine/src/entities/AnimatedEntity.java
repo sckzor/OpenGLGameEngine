@@ -5,13 +5,18 @@ import models.TexturedModel;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 
+import animation.Animation;
+import animation.Animator;
+import animation.Joint;
 import audio.AudioMaster;
 import audio.Source;
 import collisionBox.CollisionBox;
+import dataStructures.AnimatedModelData;
 
-public class Entity {
+public class AnimatedEntity {
 
 	private TexturedModel model;
 	private Vector3f position;
@@ -23,35 +28,30 @@ public class Entity {
 	
 	private int textureIndex = 0;
 	
-	public Entity(TexturedModel model, Vector3f position, float rotX, float rotY, float rotZ,
-			float scale, boolean emmitsSound) {
+	private final Joint rootJoint;
+	private final int jointCount;
+
+	private final Animator animator;
+	
+	public AnimatedEntity(TexturedModel model, Vector3f position, float rotX, float rotY, float rotZ,
+			float scale, boolean emmitsSound, Joint rootJoint, int jointCount) {
 		this.model = model;
 		this.position = position;
 		this.rotX = rotX;
 		this.rotY = rotY;
 		this.rotZ = rotZ;
 		this.scale = scale;
+		
+		this.rootJoint = rootJoint;
+		this.animator = new Animator(this);
+		this.jointCount = jointCount;
+		rootJoint.calcInverseBindTransform(new Matrix4f());
+		
 		if(emmitsSound) {
 			audioSource = new Source(AudioMaster.DEFAULT_ROLL_OFF_FACTOR, AudioMaster.DEFAULT_REFERENCE_DISTANCE, AudioMaster.DEFAULT_MAX_DISTANCE);
 			audioSource.setPosition(position.x, position.y + 3, position.z);
 		}
 		
-	}
-
-	public Entity(TexturedModel model, int index, Vector3f position, float rotX, float rotY, float rotZ,
-			float scale, boolean emmitsSound) {
-		this.model = model;
-		this.position = position;
-		this.rotX = rotX;
-		this.rotY = rotY;
-		this.rotZ = rotZ;
-		this.scale = scale;
-		this.textureIndex = index;
-		if(emmitsSound) {
-			audioSource = new Source(AudioMaster.DEFAULT_ROLL_OFF_FACTOR, AudioMaster.DEFAULT_REFERENCE_DISTANCE, AudioMaster.DEFAULT_MAX_DISTANCE);
-			audioSource.setPosition(position.x, position.y + 3, position.z);
-		}
-
 	}
 	
 	public void playAudio(String sourceName, float volume, float pitch, boolean looping)
@@ -157,9 +157,9 @@ public class Entity {
 		this.collisionBoxes.add(box);
 	}
 	
-	public CollisionBox hasCollided(List<Entity> entities)
+	public CollisionBox hasCollided(List<AnimatedEntity> entities)
 	{
-		for(Entity entity : entities)
+		for(AnimatedEntity entity : entities)
 		{
 			if(entity.getPosition().x > this.position.x - 10 && entity.getPosition().y > this.position.y - 10 && entity.getPosition().z > this.position.z - 10 &&
 					entity.getPosition().x < this.position.x + 10 && entity.getPosition().y < this.position.y + 10 && entity.getPosition().z < this.position.z + 10) {
@@ -177,6 +177,39 @@ public class Entity {
 			}
 		}
 		return null;		
+	}
+
+	public Joint getRootJoint() {
+		return rootJoint;
+	}
+
+	public int getJointCount() {
+		return jointCount;
+	}
+
+	public Animator getAnimator() {
+		return animator;
+	}
+	
+	public void doAnimation(Animation animation) {
+		animator.doAnimation(animation);
+	}
+	
+	public void update() {
+		animator.update();
+	}
+	
+	public Matrix4f[] getJointTransforms() {
+		Matrix4f[] jointMatrices = new Matrix4f[jointCount];
+		addJointsToArray(rootJoint, jointMatrices);
+		return jointMatrices;
+	}
+	
+	private void addJointsToArray(Joint headJoint, Matrix4f[] jointMatrices) {
+		jointMatrices[headJoint.index] = headJoint.getAnimatedTransform();
+		for (Joint childJoint : headJoint.children) {
+			addJointsToArray(childJoint, jointMatrices);
+		}
 	}
 
 }

@@ -12,18 +12,20 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.util.vector.Matrix4f;
 
+import shaders.AnimatedModelShader;
 import shaders.StaticShader;
 import shadows.ShadowBox;
 import shadows.ShadowMapMasterRenderer;
 import textures.ModelTexture;
 import toolbox.Maths;
+import entities.AnimatedEntity;
 import entities.Entity;
 
-public class EntityRenderer {
+public class AnimatedModelRenderer {
 
-	private StaticShader shader;
+	private AnimatedModelShader shader;
 
-	public EntityRenderer(StaticShader shader,Matrix4f projectionMatrix) {
+	public AnimatedModelRenderer(AnimatedModelShader shader,Matrix4f projectionMatrix) {
 		this.shader = shader;
 		shader.start();
 		shader.loadDensityAndGradient(MasterRenderer.DENSITY, MasterRenderer.GRADIENT);
@@ -33,13 +35,14 @@ public class EntityRenderer {
 		shader.stop();
 	}
 
-	public void render(Map<TexturedModel, List<Entity>> entities, Matrix4f toShadowSpace) {
+	public void render(Map<TexturedModel, List<AnimatedEntity>> entities, Matrix4f toShadowSpace) {
 		shader.loadToShadowSpaceMatrix(toShadowSpace);
 		for (TexturedModel model : entities.keySet()) {
 			prepareTexturedModel(model);
-			List<Entity> batch = entities.get(model);
-			for (Entity entity : batch) {
+			List<AnimatedEntity> batch = entities.get(model);
+			for (AnimatedEntity entity : batch) {
 				prepareInstance(entity);
+				shader.loadJointTransforms(entity.getJointTransforms());
 				GL11.glDrawElements(GL11.GL_TRIANGLES, model.getRawModel().getVertexCount(),
 						GL11.GL_UNSIGNED_INT, 0);
 			}
@@ -83,7 +86,7 @@ public class EntityRenderer {
 		GL30.glBindVertexArray(0);
 	}
 
-	private void prepareInstance(Entity entity) {
+	private void prepareInstance(AnimatedEntity entity) {
 		Matrix4f transformationMatrix = Maths.createTransformationMatrix(entity.getPosition(),
 				entity.getRotX(), entity.getRotY(), entity.getRotZ(), entity.getScale());
 		shader.loadTransformationMatrix(transformationMatrix);

@@ -3,6 +3,7 @@ package scene;
 import java.util.ArrayList;
 import java.util.List;
 
+import entities.AnimatedEntity;
 import entities.Camera;
 import entities.Entity;
 import entities.Light;
@@ -23,6 +24,7 @@ public class Scene {
 	private List<WaterTile> waters = new ArrayList<WaterTile>();
 	private List<Light> lights = new ArrayList<Light>();
 	private List<FlareTexture> flares = new ArrayList<FlareTexture>();
+	private List<AnimatedEntity> animatedEntites = new ArrayList<AnimatedEntity>();
 	private Light sun;
 	private Camera camera;
 	private Loader loader = new Loader();
@@ -177,7 +179,7 @@ public class Scene {
 		this.renderer = renderer;
 	}
 
-	//---------------------------- LensFlare ----------------------------\\
+	//---------------------------- Lens Flare ---------------------------\\
 	
 	public void addFlare(FlareTexture flare)
 	{
@@ -190,5 +192,19 @@ public class Scene {
 
 	public void setFlares(List<FlareTexture> flares) {
 		this.flares = flares;
+	}
+	
+	//------------------------ Animated Entities ------------------------\\
+
+	public void addAnimatedEntity(AnimatedEntity entity) {
+		animatedEntites.add(entity);
+	}
+	
+	public List<AnimatedEntity> getAnimatedEntites() {
+		return animatedEntites;
+	}
+
+	public void setAnimatedEntites(List<AnimatedEntity> animatedEntites) {
+		this.animatedEntites = animatedEntites;
 	}
 }

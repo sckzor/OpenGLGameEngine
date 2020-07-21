@@ -15,10 +15,12 @@ import org.lwjgl.opengl.GL13;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector4f;
 
+import shaders.AnimatedModelShader;
 import shaders.StaticShader;
 import shaders.TerrainShader;
 import shadows.ShadowMapMasterRenderer;
 import terrains.Terrain;
+import entities.AnimatedEntity;
 import entities.Camera;
 import entities.Entity;
 import entities.Light;
@@ -51,9 +53,13 @@ public class MasterRenderer {
 	private NormalMappingRenderer normalMapRenderer;
 	private ShadowMapMasterRenderer shadowMapRenderer;
 	
+	private AnimatedModelRenderer animatedRenderer;
+	private AnimatedModelShader animatedShader = new AnimatedModelShader();
 	
 	private Map<TexturedModel,List<Entity>> entities = new HashMap<TexturedModel,List<Entity>>();
 	private Map<TexturedModel,List<Entity>> normalMappedEntities = new HashMap<TexturedModel,List<Entity>>();
+	private Map<TexturedModel,List<AnimatedEntity>> animatedEntities = new HashMap<TexturedModel,List<AnimatedEntity>>();
+
 		
 	private List<Terrain> terrains = new ArrayList<Terrain>();
 	private SkyBoxRenderer skyboxRenderer;
@@ -66,6 +72,7 @@ public class MasterRenderer {
 		CubeMap enviroMap = new CubeMap(TEXTURE_FILES, loader);
 		skyboxRenderer = new SkyBoxRenderer(enviroMap, projectionMatrix);
 		normalMapRenderer = new NormalMappingRenderer(projectionMatrix);
+		animatedRenderer = new AnimatedModelRenderer(animatedShader,projectionMatrix);
 		this.shadowMapRenderer = new ShadowMapMasterRenderer(scene.getCamera());
 	}
 	
@@ -89,6 +96,10 @@ public class MasterRenderer {
 		{
 			processNormalMappedEntity(entity);
 		}
+		for (AnimatedEntity entity:scene.getAnimatedEntites())
+		{
+			processAnimatedEntity(entity);
+		}
 		
 		prepare();
 		render(scene.getLight(), scene.getCamera(), clippingPlane);
@@ -110,11 +121,17 @@ public class MasterRenderer {
 		terrainShader.loadViewMatrix(camera);
 		terrainRenderer.render(terrains, shadowMapRenderer.getToShadowMapSpaceMatrix());
 		terrainShader.stop();
+		animatedShader.start();
+		animatedShader.loadClippingPlane(clippingPlane);
+		animatedShader.loadSkyColour(RED, GREEN, BLUE);
+		animatedShader.loadLights(lights);
+		animatedShader.loadViewMatrix(camera);
+		animatedRenderer.render(animatedEntities, shadowMapRenderer.getToShadowMapSpaceMatrix());
 		skyboxRenderer.render(camera, RED, GREEN, BLUE);
 		terrains.clear();
 		entities.clear();
 		normalMappedEntities.clear();
-		
+		animatedEntities.clear();
 	}
 	
 	public void processTerrain(Terrain terrain){
@@ -130,6 +147,18 @@ public class MasterRenderer {
 			List<Entity> newBatch = new ArrayList<Entity>();
 			newBatch.add(entity);
 			entities.put(entityModel, newBatch);		
+		}
+	}
+	
+	public void processAnimatedEntity(AnimatedEntity entity){
+		TexturedModel entityModel = entity.getModel();
+		List<AnimatedEntity> batch = animatedEntities.get(entityModel);
+		if(batch!=null){
+			batch.add(entity);
+		}else{
+			List<AnimatedEntity> newBatch = new ArrayList<AnimatedEntity>();
+			newBatch.add(entity);
+			animatedEntities.put(entityModel, newBatch);		
 		}
 	}
 	

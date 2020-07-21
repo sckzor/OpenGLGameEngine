@@ -29,14 +29,20 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 import org.newdawn.slick.opengl.ImageIOImageData;
 
+import animation.Animation;
 import audio.AudioMaster;
 import audio.Source;
+import colladaLoader.ColladaLoader;
 import collisionBox.CollisionBox;
+import dataStructures.AnimatedModelData;
+import dataStructures.AnimationData;
+import renderEngine.AnimationLoader;
 import renderEngine.DisplayManager;
 import renderEngine.Loader;
 import renderEngine.MasterRenderer;
@@ -51,6 +57,8 @@ import water.WaterFrameBuffers;
 import water.WaterRenderer;
 import water.WaterShader;
 import water.WaterTile;
+import entities.AnimatedEntity;
+import entities.AnimatedModelLoader;
 import entities.Camera;
 import entities.Entity;
 import entities.Light;
@@ -78,9 +86,21 @@ public class MainGameLoop {
 		
 		Loader loader = new Loader();
 		TextMaster.init(loader);
+				
+		
+		Animation animation = AnimationLoader.loadAnimation("model");
 		
 		RawModel bunny = OBJLoader.loadObjModel("bunny", loader);
+		
+		AnimatedEntity animModel = AnimatedModelLoader.loadEntity("model", "diffuse", loader, new Vector3f(400, 0, 400), 0, 0, 0, 1f, true);
+		
+		scene.addAnimatedEntity(animModel);
+		animModel.doAnimation(animation);
+
+		
+		
 		TexturedModel staticBunny = new TexturedModel(bunny, new ModelTexture(loader.loadTexture("white", -0.4f)));
+		
 		Player player = new Player(staticBunny, new Vector3f(400, 10, 400), 0, 180, 0, 0.4f);
 		player.addCollisionBox(new CollisionBox(new Vector3f(390, 0, 390),new Vector3f(410, 20, 410)));
 		
@@ -194,7 +214,7 @@ public class MainGameLoop {
 		}
 		
 		scene.setSun(new Light(new Vector3f(1000000,1500000,-1000000),new Vector3f(1f,1f,1f)));
-		Light light = new Light(new Vector3f(400,-8,400),new Vector3f(0f,2f,0f), new Vector3f(1f,0.01f,0.002f));
+		Light light = new Light(new Vector3f(400,-8,400),new Vector3f(1f,1f,1f), new Vector3f(1f,0.01f,0.002f));
 		scene.addLight(light);
 		
 		scene.addEntity(player);
@@ -232,9 +252,8 @@ public class MainGameLoop {
 		Entity lampPost = new Entity(staticlamp, new Vector3f(400,-8, 400), 0, 0, 0, 1, true);
 		scene.addEntity(lampPost);
 		lampPost.playAudio("bounce", 1, 1, true);
-
-		//pauseMenu.enableRendering();
 		
+
 		while(!Display.isCloseRequested()){
 			player.move(scene);
 			scene.getCamera().move();
@@ -267,9 +286,9 @@ public class MainGameLoop {
 					break;
 				}
 			}
-			
-			ParticleMaster.update(scene);
 						
+			ParticleMaster.update(scene);
+					
 			scene.getRenderer().renderShadowMap(scene, scene.getSun());
 			
 			waterRenderer.reflectOffWater(scene);
@@ -291,7 +310,8 @@ public class MainGameLoop {
 					scene.addEntity(new Entity(staticlamp, new Vector3f(terrainPoint.x, terrainPoint.y, terrainPoint.z), 0, 0, 0, 1, true));
 				}
 			}
-
+			animModel.update();
+			
 			multisampleFbo.bindFrameBuffer();
 			scene.getRenderer().renderScene(scene, new Vector4f(0, -1, 0, 100000000));
 			waterRenderer.render(scene);
@@ -314,6 +334,7 @@ public class MainGameLoop {
 			TextMaster.render();
 			
 			DisplayManager.updateDisplay();
+
 		}
 
 		outputFbo.cleanUp();

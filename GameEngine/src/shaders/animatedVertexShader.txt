@@ -1,9 +1,13 @@
 #version 400 core
 
+const int MAX_JOINTS = 50;
+const int MAX_WEIGHTS = 3;
 
 in vec3 position;
 in vec2 textureCoordinates;
 in vec3 normal;
+in ivec3 jointIndices;
+in vec3 weights;
 
 out vec2 pass_textureCoordinates;
 out vec3 surfaceNormal;
@@ -28,26 +32,39 @@ uniform float numberOfRows;
 uniform float offset;
 uniform float useFakeLighting;
 
+uniform mat4 jointTransforms[MAX_JOINTS];
 uniform vec4 plane;
 
-void main(void){
+vec4 totalLocalPos = vec4(0.0);
+vec4 totalNormal = vec4(0.0);
 
-	vec4 worldPosition = transformationMatrix * vec4(position,1.0);
+void main(void){	
+	for(int i=0;i<MAX_WEIGHTS;i++){
+		mat4 jointTransform = jointTransforms[jointIndices[i]];
+		vec4 posePosition = jointTransform * vec4(position, 1.0);
+		totalLocalPos += posePosition * weights[i];
+		
+		vec4 worldNormal = jointTransform * vec4(normal, 0.0);
+		totalNormal += worldNormal * weights[i];
+	}
+	
+	vec4 worldPosition = transformationMatrix * totalLocalPos;
 	shadowCoords = toShadowMapSpace * worldPosition;
 	
 	gl_ClipDistance[0] = dot(worldPosition, plane);
 	
 	vec4 positionRelativeToCamera = viewMatrix * worldPosition;
-	gl_Position = projectionMatrix * positionRelativeToCamera;
+	gl_Position = projectionMatrix * viewMatrix * transformationMatrix * totalLocalPos;
+	
 	pass_textureCoordinates = (textureCoordinates/numberOfRows) + offset;
 	
-	vec3 actualNormal = normal;
+	vec3 actualNormal = totalNormal.xyz;
 	if(useFakeLighting > 0.5)
 	{
 		actualNormal = vec3(0.0f, 1.0f, 0.0f);
 	}
 	
-	surfaceNormal = (transformationMatrix * vec4(actualNormal,0.0)).xyz;
+	surfaceNormal = (transformationMatrix * vec4(actualNormal, 0.0)).xyz;
 	for(int i = 0; i < 4; i++)
 	{
 		toLightVector[i] = lightPosition[i] - worldPosition.xyz;
