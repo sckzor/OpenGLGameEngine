@@ -1,5 +1,7 @@
 package toolbox;
 
+import javax.vecmath.Quat4f;
+
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
@@ -47,4 +49,12 @@ public class Maths {
 		Matrix4f.scale(new Vector3f(scale.x, scale.y, 1f), matrix, matrix);
 		return matrix;
 	}
+	
+	public static Vector3f QuaternionToEuler(Quat4f q){
+		float pitch = (float)(Math.atan2(2.0 * (q.y * q.z + q.w * q.x), q.w * q.w - q.x * q.x - q.y * q.y + q.z * q.z));
+		float roll = (float)(Math.asin(-2.0 * (q.x * q.z - q.w * q.y)));
+		float yaw = (float)(Math.atan2(2.0 * (q.x * q.y + q.w * q.z), q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z));
+		return new Vector3f(pitch, roll, yaw);
+	}
+	
 }

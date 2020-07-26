@@ -16,14 +16,22 @@ import dataStructures.JointTransformData;
 import dataStructures.KeyFrameData;
 
 public class AnimationLoader {
-
 	public static Animation loadAnimation(String colladaFile) {
 		AnimationData animationData = ColladaLoader.loadColladaAnimation(colladaFile);
 		KeyFrame[] frames = new KeyFrame[animationData.keyFrames.length];
 		for (int i = 0; i < frames.length; i++) {
 			frames[i] = createKeyFrame(animationData.keyFrames[i]);
 		}
-		return new Animation(animationData.lengthSeconds, frames);
+		return new Animation(animationData.lengthSeconds, frames, colladaFile);
+	}
+	
+	public static Animation loadAnimation(String colladaFile, String name) {
+		AnimationData animationData = ColladaLoader.loadColladaAnimation(colladaFile);
+		KeyFrame[] frames = new KeyFrame[animationData.keyFrames.length];
+		for (int i = 0; i < frames.length; i++) {
+			frames[i] = createKeyFrame(animationData.keyFrames[i]);
+		}
+		return new Animation(animationData.lengthSeconds, frames, name);
 	}
 
 	private static KeyFrame createKeyFrame(KeyFrameData data) {

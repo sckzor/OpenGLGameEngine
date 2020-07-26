@@ -6,119 +6,73 @@ import java.util.List;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.util.vector.Vector3f;
 
+import com.bulletphysics.dynamics.character.KinematicCharacterController;
+import com.bulletphysics.linearmath.Transform;
+
+import animation.Animation;
+import animation.Joint;
 import audio.AudioMaster;
-import collisionBox.CollisionBox;
+import models.AnimatedModel;
 import models.TexturedModel;
+import physics.PhysicsMaster;
+import renderEngine.AnimationLoader;
 import renderEngine.DisplayManager;
 import scene.Scene;
 import terrains.Terrain;
 
-public class Player extends Entity{
+public class Player extends AnimatedEntity{
 
-	private static final float RUN_SPEED = 50;
+	private static final float RUN_SPEED = 20;
 	private static final float TURN_SPEED = 160;
-	public static final float GRAVITY = -70;
 	private static final float JUMP_POWER = 30;
-		
-	private float currentSpeed = 0;
-	private float currentTurnSpeed = 0;
-	private float upwardsSpeed = 0;
-	private boolean collided = false;
-	private float collisionDx = 0f;
-	private float collisionDz = 0f;
-
 	
-	private boolean isInAir = false;
-	
-	public Player(TexturedModel model, Vector3f position, float rotX, float rotY, float rotZ, float scale) {
-		super(model, position, rotX, rotY, rotZ, scale, false);
+	public Player(AnimatedModel model, Vector3f position, float rotX, float rotY, float rotZ, float scale, boolean audio) {
+		super(model, position, rotX, rotY, rotZ, scale, audio);
 	}
-	
-	public void move(Scene scene)
-	{		
-		checkInputs();
-		
-		super.increaseRotation(0, currentTurnSpeed * DisplayManager.getFrameTimeSeconds(), 0);
-		
-		float distance = currentSpeed * DisplayManager.getFrameTimeSeconds();;
-		
-		float dx = (float) (distance * Math.sin(Math.toRadians(super.getRotY())));
-		float dz = (float) (distance * Math.cos(Math.toRadians(super.getRotY())));
-		
-		if(super.hasCollided(scene.getEntities()) != null && !collided)
-		{
-			collided = true;
-			collisionDx = dx;
-			collisionDz = dz;
-		}
-		
-		if(collided)
-		{
-			if((-Math.signum(collisionDx) == Math.signum(dx) || -Math.signum(collisionDz) == Math.signum(dz)) && collided)
-			{
-				super.increasePosition(dx, 0, dz);
-				collided = false;
-			}
-
-		}else
-		{
-			super.increasePosition(dx, 0, dz);
-		}
-		
-		upwardsSpeed += GRAVITY * DisplayManager.getFrameTimeSeconds();
-		super.increasePosition(0, upwardsSpeed * DisplayManager.getFrameTimeSeconds(), 0);
-		List<Terrain> terrains = scene.getTerrains();
-
-		float terrainHeight = terrains.get(0).getHeightOfTerrain(super.getPosition().x, super.getPosition().z);
-		if(super.getPosition().y<terrainHeight)
-		{
-			upwardsSpeed = 0;
-			super.getPosition().y = terrainHeight;
-			isInAir = false;
-		}
-		
-		for(CollisionBox Box:super.collisionBoxes)
-		{
-			Box.move(super.getPosition());
-		}
-		
+	public void update(Scene scene)
+	{	
+		javax.vecmath.Vector3f lastVelosity = new javax.vecmath.Vector3f(0,0,0);
+		physicsBody.getLinearVelocity(lastVelosity);
+		PhysicsMaster.setVelocity(physicsBody, new Vector3f(0, lastVelosity.y, 0));
+		checkInputs(lastVelosity.y);
+		Vector3f playerTransform = PhysicsMaster.getPos(physicsBody);
+		super.setPosition(new Vector3f(playerTransform.x, playerTransform.y, playerTransform.z));
 		AudioMaster.setListenerData(super.getPosition().x, super.getPosition().y, super.getPosition().z);
-
+		super.update();
 	}
 	
-	private void jump()
-	{
-		if(!isInAir)
-		{
-			this.upwardsSpeed = JUMP_POWER;
-			isInAir = true;
-		}
-		
-	}
-	
-	private void checkInputs()
+	private void checkInputs(float lastVelosity)
 	{
 		if(Keyboard.isKeyDown(Keyboard.KEY_W)){
-			this.currentSpeed = RUN_SPEED;
+			doAnimation("model", 0.5f);
+			if(super.getPosition().y < 0.5) {
+				PhysicsMaster.setVelocity(physicsBody, new Vector3f(0, lastVelosity, RUN_SPEED));
+			}
 		}
 		else if(Keyboard.isKeyDown(Keyboard.KEY_S)){
-			this.currentSpeed = -RUN_SPEED;
+			doAnimation("model", 0.5f);
+			if(super.getPosition().y < 0.5) {
+				PhysicsMaster.setVelocity(physicsBody, new Vector3f(0, lastVelosity, -RUN_SPEED));
+			}
 		}
-		else {
-			this.currentSpeed = 0;
-		}
-			
-		if(Keyboard.isKeyDown(Keyboard.KEY_D)){
-			this.currentTurnSpeed = -TURN_SPEED;
+		else if(Keyboard.isKeyDown(Keyboard.KEY_D)){
+			doAnimation("model", 0.5f);
+			if(super.getPosition().y < 0.5) {
+				PhysicsMaster.setVelocity(physicsBody, new Vector3f(-RUN_SPEED, lastVelosity, 0));
+			}
 		}
 		else if(Keyboard.isKeyDown(Keyboard.KEY_A)){
-			this.currentTurnSpeed = TURN_SPEED;
-		} else {
-			this.currentTurnSpeed = 0;
+			doAnimation("model", 0.5f);
+			if(super.getPosition().y < 0.5) {
+				PhysicsMaster.setVelocity(physicsBody, new Vector3f(RUN_SPEED, lastVelosity, 0));
+			}
+		}else {
+			doAnimation(null, 1);
 		}
 		if(Keyboard.isKeyDown(Keyboard.KEY_SPACE)){
-			jump();
+			PhysicsMaster.applyForce(physicsBody, new Vector3f(0, RUN_SPEED, 0));
 		}
+
 			
 	}
 }

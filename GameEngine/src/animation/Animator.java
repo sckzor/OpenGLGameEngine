@@ -14,15 +14,32 @@ public class Animator {
 	private final AnimatedEntity entity;
 
 	private Animation currentAnimation;
+	private float speedMultiplier = 1;
 	private float animationTime = 0;
-
+	private boolean isPlaying= false;
+	private boolean shouldPlay= false;
+	
 	public Animator(AnimatedEntity entity) {
 		this.entity = entity;
 	}
 
-	public void doAnimation(Animation animation) {
-		this.animationTime = 0;
-		this.currentAnimation = animation;
+	public void doAnimation(String animation, float speedMultiplier) {
+		this.speedMultiplier = speedMultiplier;
+		if(animation != null) {
+			shouldPlay = true;
+		}else {
+			shouldPlay = false;
+		}
+		if(shouldPlay && !isPlaying) {
+			this.animationTime = 0;
+			this.currentAnimation = entity.getAnimations(animation);
+			isPlaying = true;
+		}
+		if(!shouldPlay && isPlaying)
+		{
+			this.currentAnimation = null;
+			isPlaying = false;
+		}
 	}
 
 	public void update() {
@@ -32,10 +49,11 @@ public class Animator {
 		increaseAnimationTime();
 		Map<String, Matrix4f> currentPose = calculateCurrentAnimationPose();
 		applyPoseToJoints(currentPose, entity.getRootJoint(), new Matrix4f());
+
 	}
 
 	private void increaseAnimationTime() {
-		animationTime += DisplayManager.getFrameTimeSeconds();
+		animationTime += DisplayManager.getFrameTimeSeconds()*speedMultiplier;
 		if (animationTime > currentAnimation.getLength()) {
 			this.animationTime %= currentAnimation.getLength();
 		}

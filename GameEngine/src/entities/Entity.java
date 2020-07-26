@@ -1,26 +1,28 @@
 package entities;
 
 import models.TexturedModel;
+import physics.PhysicsMaster;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.lwjgl.util.vector.Vector3f;
 
+import com.bulletphysics.collision.dispatch.CollisionObject;
+import com.bulletphysics.dynamics.RigidBody;
+
 import audio.AudioMaster;
 import audio.Source;
-import collisionBox.CollisionBox;
 
 public class Entity {
 
 	private TexturedModel model;
+	protected RigidBody physicsBody;
 	private Vector3f position;
 	private float rotX, rotY, rotZ;
 	private float scale;
 	private Source audioSource;
-	
-	public List<CollisionBox> collisionBoxes = new ArrayList<CollisionBox>();
-	
+		
 	private int textureIndex = 0;
 	
 	public Entity(TexturedModel model, Vector3f position, float rotX, float rotY, float rotZ,
@@ -152,31 +154,17 @@ public class Entity {
 		this.scale = scale;
 	}
 	
-	public void addCollisionBox(CollisionBox box)
+	public void addPhysicsBody(RigidBody body)
 	{
-		this.collisionBoxes.add(box);
+		this.physicsBody = body;
+		PhysicsMaster.addRigidBody(body);
 	}
 	
-	public CollisionBox hasCollided(List<Entity> entities)
+	public void update()
 	{
-		for(Entity entity : entities)
-		{
-			if(entity.getPosition().x > this.position.x - 10 && entity.getPosition().y > this.position.y - 10 && entity.getPosition().z > this.position.z - 10 &&
-					entity.getPosition().x < this.position.x + 10 && entity.getPosition().y < this.position.y + 10 && entity.getPosition().z < this.position.z + 10) {
-				for(CollisionBox thisBox : collisionBoxes) {
-					if(entity.collisionBoxes != null)
-					{
-						for(CollisionBox EntityBox : entity.collisionBoxes) {
-							if(thisBox.hasCollided(EntityBox))						
-							{
-								return EntityBox;
-							}     
-						}
-					}
-				}
-			}
+		if(physicsBody != null) {
+			Vector3f transform = PhysicsMaster.getPos(physicsBody);
+			setPosition(new Vector3f(transform.x, transform.y, transform.z));
 		}
-		return null;		
 	}
-
 }

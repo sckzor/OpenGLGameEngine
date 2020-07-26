@@ -12,5 +12,7 @@
 	<classpathentry kind="lib" path="lib/jars/slick-util.jar"/>
 	<classpathentry kind="lib" path="lib/jars/PNGDecoder.jar"/>
 	<classpathentry kind="src" path="ColladaParser"/>
+	<classpathentry kind="lib" path="C:/Users/charl/git/OpenGLGameEngine/GameEngine/lib/jars/jbullet.jar"/>
+	<classpathentry kind="lib" path="C:/Users/charl/git/OpenGLGameEngine/GameEngine/lib/jars/vecmath.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

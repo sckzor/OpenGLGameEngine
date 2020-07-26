@@ -1,6 +1,5 @@
 package engineTester;
 
-import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +13,7 @@ import java.util.Random;
 
 import javax.imageio.ImageIO;
 
+import models.AnimatedModel;
 import models.RawModel;
 import models.TexturedModel;
 import normalMappingObjConverter.NormalMappedObjLoader;
@@ -21,6 +21,8 @@ import particles.Particle;
 import particles.ParticleMaster;
 import particles.ParticleSystem;
 import particles.ParticleTexture;
+import physics.PhysicsHelper;
+import physics.PhysicsMaster;
 import postProcessing.Fbo;
 import postProcessing.PostProcessing;
 
@@ -39,7 +41,6 @@ import animation.Animation;
 import audio.AudioMaster;
 import audio.Source;
 import colladaLoader.ColladaLoader;
-import collisionBox.CollisionBox;
 import dataStructures.AnimatedModelData;
 import dataStructures.AnimationData;
 import renderEngine.AnimationLoader;
@@ -79,30 +80,22 @@ public class MainGameLoop {
 		Scene scene = new Scene();
 		
 		DisplayManager.createDisplay(false, DisplayManager.WIDTH, DisplayManager.HEIGHT);
+		PhysicsMaster.initPhysics();
 		
 		AudioMaster.init();
 		AudioMaster.setListenerData(0, 0, 0);
 		
-		
 		Loader loader = new Loader();
-		TextMaster.init(loader);
-				
 		
+		TextMaster.init(loader);	
+		
+		AnimatedModel animModel = AnimatedModelLoader.loadEntity("model", "diffuse", loader);
 		Animation animation = AnimationLoader.loadAnimation("model");
-		
-		RawModel bunny = OBJLoader.loadObjModel("bunny", loader);
-		
-		AnimatedEntity animModel = AnimatedModelLoader.loadEntity("model", "diffuse", loader, new Vector3f(400, 0, 400), 0, 0, 0, 1f, true);
-		
-		scene.addAnimatedEntity(animModel);
-		animModel.doAnimation(animation);
-
-		
-		
-		TexturedModel staticBunny = new TexturedModel(bunny, new ModelTexture(loader.loadTexture("white", -0.4f)));
-		
-		Player player = new Player(staticBunny, new Vector3f(400, 10, 400), 0, 180, 0, 0.4f);
-		player.addCollisionBox(new CollisionBox(new Vector3f(390, 0, 390),new Vector3f(410, 20, 410)));
+				
+		Player player = new Player(animModel, new Vector3f(400, 0, 400), 0, 0, 0, 1f, true);
+		player.addAnimation(animation);
+		player.addPhysicsBody(PhysicsHelper.createCapsule(0.2f, 0.2f, 1, 400, 100, 400));
+		scene.addAnimatedEntity(player);
 		
 		scene.setCamera(new Camera(false, player));	
 		scene.setRenderer(new MasterRenderer(loader, scene));
@@ -142,8 +135,8 @@ public class MainGameLoop {
 		TexturedModel staticlamp = new TexturedModel(lamp,new ModelTexture(loader.loadTexture("lantern", -0.4f)));
 		staticlamp.getTexture().setSpecularMap(loader.loadTexture("lanternS", 0.4f));
 		
-		RawModel grass = OBJLoader.loadObjModel("grassModel", loader);
-		TexturedModel staticGrass = new TexturedModel(grass,new ModelTexture(loader.loadTexture("grassTexture", -0.4f)));
+		RawModel grass = OBJLoader.loadObjModel("ramp", loader);
+		TexturedModel staticGrass = new TexturedModel(grass,new ModelTexture(loader.loadTexture("white", -0.4f)));
 		staticGrass.getTexture().setHasTrasparency(true);
 		staticGrass.getTexture().setUseFakeLighting(true);
 		
@@ -190,20 +183,22 @@ public class MainGameLoop {
 		
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss");  
 		
-		for(int i=0;i<200;i++){
+		for(int i=0;i<100;i++){
 			float x = random.nextFloat()* 800;
 			float z = random.nextFloat()* 800;
 			float y = terrain.getHeightOfTerrain(x, z);
 			if(terrain.getHeightOfTerrain(x, z) != 0) {
 			Entity tree = new Entity(staticCherry, new Vector3f(x, y, z),0f,0f,0f,3f, false);
-				tree.addCollisionBox(new CollisionBox(new Vector3f(x-15, y-100, z-15), new Vector3f(x+15, y+100, z+15)));
-				scene.addEntity(tree);
+			tree.addPhysicsBody(PhysicsHelper.addMesh(OBJLoader.loadObjModelCollsion("sphere"), 0f, x, 1, z, 2f));
+			scene.addEntity(tree);
 			}
 			x = random.nextFloat()* 800;
 			z = random.nextFloat()* 800;
 			y = terrain.getHeightOfTerrain(x, z);
 			if(terrain.getHeightOfTerrain(x, z) != 0) {
-				scene.addEntity(new Entity(staticGrass, new Vector3f(x, y, z),0,0,0,1, false));
+				Entity ramp = new Entity(staticGrass, new Vector3f(x, 1, z),0,0,0,10, false);
+				ramp.addPhysicsBody(PhysicsHelper.addMesh(OBJLoader.loadObjModelCollsion("ramp"), 0f, x, 4, z, 10f));
+				scene.addEntity(ramp);
 			}
 			x = random.nextFloat()* 800;
 			z = random.nextFloat()* 800;
@@ -215,10 +210,7 @@ public class MainGameLoop {
 		
 		scene.setSun(new Light(new Vector3f(1000000,1500000,-1000000),new Vector3f(1f,1f,1f)));
 		Light light = new Light(new Vector3f(400,-8,400),new Vector3f(1f,1f,1f), new Vector3f(1f,0.01f,0.002f));
-		scene.addLight(light);
-		
-		scene.addEntity(player);
-		
+		scene.addLight(light);		
 		
 		MousePicker picker = new MousePicker(scene, scene.getRenderer().getProjectionMatrix(), terrain);
 		
@@ -255,7 +247,7 @@ public class MainGameLoop {
 		
 
 		while(!Display.isCloseRequested()){
-			player.move(scene);
+			player.update(scene);
 			scene.getCamera().move();
 			picker.update();
 		    			
@@ -289,6 +281,8 @@ public class MainGameLoop {
 						
 			ParticleMaster.update(scene);
 					
+			PhysicsMaster.update();
+			
 			scene.getRenderer().renderShadowMap(scene, scene.getSun());
 			
 			waterRenderer.reflectOffWater(scene);
@@ -310,7 +304,7 @@ public class MainGameLoop {
 					scene.addEntity(new Entity(staticlamp, new Vector3f(terrainPoint.x, terrainPoint.y, terrainPoint.z), 0, 0, 0, 1, true));
 				}
 			}
-			animModel.update();
+			player.update();
 			
 			multisampleFbo.bindFrameBuffer();
 			scene.getRenderer().renderScene(scene, new Vector4f(0, -1, 0, 100000000));
