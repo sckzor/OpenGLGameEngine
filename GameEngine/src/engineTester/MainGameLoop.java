@@ -94,7 +94,7 @@ public class MainGameLoop {
 				
 		Player player = new Player(animModel, new Vector3f(400, 0, 400), 0, 0, 0, 1f, true);
 		player.addAnimation(animation);
-		player.addPhysicsBody(PhysicsHelper.createCapsule(0.2f, 0.2f, 1, 400, 100, 400));
+		player.addPhysicsBody(PhysicsHelper.createCapsule(2f, 1f, 1, 400, 100, 400));
 		scene.addAnimatedEntity(player);
 		
 		scene.setCamera(new Camera(false, player));	
@@ -196,17 +196,13 @@ public class MainGameLoop {
 			z = random.nextFloat()* 800;
 			y = terrain.getHeightOfTerrain(x, z);
 			if(terrain.getHeightOfTerrain(x, z) != 0) {
-				Entity ramp = new Entity(staticGrass, new Vector3f(x, 1, z),0,0,0,10, false);
-				ramp.addPhysicsBody(PhysicsHelper.addMesh(OBJLoader.loadObjModelCollsion("ramp"), 0f, x, 4, z, 10f));
-				scene.addEntity(ramp);
-			}
-			x = random.nextFloat()* 800;
-			z = random.nextFloat()* 800;
-			y = terrain.getHeightOfTerrain(x, z);
-			if(terrain.getHeightOfTerrain(x, z) != 0) {
 				scene.addEntity(new Entity(staticFern, random.nextInt(4), new Vector3f(x, y, z),0,0,0,1, false));
 			}
 		}
+		
+		Entity ramp = new Entity(staticGrass, new Vector3f(300, 1, 300),0,0,0,10, false);
+		ramp.addPhysicsBody(PhysicsHelper.addMesh(OBJLoader.loadObjModelCollsion("ramp"), 0f, 300, 4, 300, 10f));
+		scene.addEntity(ramp);
 		
 		scene.setSun(new Light(new Vector3f(1000000,1500000,-1000000),new Vector3f(1f,1f,1f)));
 		Light light = new Light(new Vector3f(400,-8,400),new Vector3f(1f,1f,1f), new Vector3f(1f,0.01f,0.002f));

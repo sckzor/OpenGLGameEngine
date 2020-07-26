@@ -26,13 +26,13 @@ public class PhysicsHelper {
 	public static RigidBody createCapsule(float radius, float height, float mass, float x, float y, float z)
 	{
 		CollisionShape shape = new CapsuleShape(radius, height);
-		DefaultMotionState motionState = new DefaultMotionState(new Transform(new Matrix4f(new Quat4f(0, 0, 0, 1), new Vector3f(x, y, z), 1.0f)));
+		DefaultMotionState motionState = new DefaultMotionState(new Transform(new Matrix4f(new Quat4f(0, 0, 0, 1), new Vector3f(x, y-height, z), 1.0f)));
 
     	Vector3f Inertia = new Vector3f(0,0,0); 
     	shape.calculateLocalInertia(mass,Inertia); 
 
     	RigidBodyConstructionInfo RigidBodyCI = new RigidBodyConstructionInfo(mass,motionState,shape,Inertia); 
-    	RigidBodyCI.restitution = 0.5f;
+    	RigidBodyCI.restitution = 0.95f;
     	RigidBodyCI.angularDamping = 0.95f;
     	RigidBodyCI.friction = 0.95f;
     	return new RigidBody(RigidBodyCI); 
@@ -71,7 +71,7 @@ public class PhysicsHelper {
 	        TriangleIndexVertexArray vertArray = new TriangleIndexVertexArray();
 	        vertArray.addIndexedMesh(indexedMesh);
 
-	        boolean useQuantizedAabbCompression = false;
+	        boolean useQuantizedAabbCompression = true;
 	        BvhTriangleMeshShape meshShape = new BvhTriangleMeshShape(vertArray, useQuantizedAabbCompression);
 	        meshShape.setLocalScaling(new Vector3f(scale, scale, scale));
 

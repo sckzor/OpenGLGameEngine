@@ -35,7 +35,12 @@ import toolbox.Maths;
 public class PhysicsMaster {
 
 	private static DiscreteDynamicsWorld dynamicsWorld;
-    private static List<RigidBody> rigidBodies = new ArrayList<RigidBody>();
+	
+    public static DiscreteDynamicsWorld getDynamicsWorld() {
+		return dynamicsWorld;
+	}
+
+	private static List<RigidBody> rigidBodies = new ArrayList<RigidBody>();
     private static int GRAVITY = -10;
     public static void initPhysics() {
     	BroadphaseInterface broadphase = new DbvtBroadphase();
@@ -74,12 +79,12 @@ public class PhysicsMaster {
 	    return new org.lwjgl.util.vector.Vector3f(trans.origin.x, trans.origin.y, trans.origin.z);
     }
     
-    public static org.lwjgl.util.vector.Vector3f getRot(RigidBody rigidBody)
+    public static Quat4f getRot(RigidBody rigidBody)
     {
     	Transform trans = new Transform();
     	rigidBody.getMotionState().getWorldTransform(trans);
 	    Quat4f rot = new Quat4f();
-	    return Maths.QuaternionToEuler(trans.getRotation(rot));
+	    return trans.getRotation(rot);
     }
     
     public static void addRigidBody(RigidBody rigidBody)

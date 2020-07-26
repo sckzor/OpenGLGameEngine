@@ -50,11 +50,35 @@ public class Maths {
 		return matrix;
 	}
 	
-	public static Vector3f QuaternionToEuler(Quat4f q){
-		float pitch = (float)(Math.atan2(2.0 * (q.y * q.z + q.w * q.x), q.w * q.w - q.x * q.x - q.y * q.y + q.z * q.z));
-		float roll = (float)(Math.asin(-2.0 * (q.x * q.z - q.w * q.y)));
-		float yaw = (float)(Math.atan2(2.0 * (q.x * q.y + q.w * q.z), q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z));
-		return new Vector3f(pitch, roll, yaw);
+	public static Vector3f quatToEuler(Quat4f quat)
+	{
+	  float  heading,attitude,bank;
+	  Quat4f q1 = new Quat4f();
+	  q1.x =quat.x;
+	  q1.y = quat.y;
+	  q1.z = quat.z;
+	  q1.w = quat.w;
+	  double test = q1.x*q1.y + q1.z*q1.w;
+		if (test > 0.499) { // singularity at north pole
+			heading = (float) (2 * Math.atan2(q1.x,q1.w));
+			attitude = (float) (Math.PI/2);
+			bank = 0;
+			return new Vector3f(0,0,0);
+		}
+		if (test < -0.499) { // singularity at south pole
+			heading = (float) (-2 * Math.atan2(q1.x,q1.w));
+			attitude = (float) (- Math.PI/2);
+			bank = 0;
+			return  new Vector3f(0,0,0);
+		}
+	    double sqx = q1.x*q1.x;
+	    double sqy = q1.y*q1.y;
+	    double sqz = q1.z*q1.z;
+	    heading = (float) Math.atan2(2*q1.y*q1.w-2*q1.x*q1.z , 1 - 2*sqy - 2*sqz);
+	    attitude = (float) Math.asin(2*test);
+	    bank = (float) Math.atan2(2*q1.x*q1.w-2*q1.y*q1.z , 1 - 2*sqx - 2*sqz);
+	    Vector3f vec = new Vector3f(bank,heading,attitude);
+	    return vec;
 	}
 	
 }
