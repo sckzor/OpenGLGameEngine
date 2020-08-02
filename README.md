@@ -17,10 +17,12 @@ Functionality includes the ability to:
 - Add post processing effects
 - Render semi realistic shadows to the screen
 - Bind audio sources to entites and particle systems
-- low poly looking terrain
+- Low poly looking terrain
+- Both animation and static model loading in the Collada .dae file format
+- jBullet collision and physics
 
-A photo of the engine rendering a test scene
+# A photo of the engine rendering a test scene
 
-![A photo of the engine](https://iili.io/dqA5f1.png)
+![A photo of the engine](https://iili.io/dTDka2.png)
 
-Total time spent ~2 months
+Total time spent ~2.5 months
