@@ -85,12 +85,20 @@ public class Loader {
 		GL30.glBindVertexArray(0);
 	}
 	
-	public int loadToVAO(float[] positions,float[] textureCoords){
+	public int[] loadToVAO(float[] positions,float[] textureCoords){
 		int vaoID = createVAO();
-		storeDataInAttributeList(0,2,positions);
-		storeDataInAttributeList(1,2,textureCoords);
+		int posVbo = storeDataInAttributeList(0,2,positions);
+		int texCoordVbo = storeDataInAttributeList(1,2,textureCoords);
 		unbindVAO();
-		return vaoID;
+		int[] arr = {vaoID, posVbo, texCoordVbo};
+		return arr;
+	}
+	
+	public void updateVAO(float[] positions,float[] textureCoords, int vaoID, int posVbo, int texCoordVbo){
+		GL30.glBindVertexArray(vaoID);
+		updateDataInAttributeList(0,2,positions, posVbo);
+		updateDataInAttributeList(1,2,textureCoords, texCoordVbo);
+		unbindVAO();
 	}
 	
 	public RawModel loadToVAO(float[] positions,float[] textureCoords,float[] normals,int[] indices, float[] tangents){
@@ -115,8 +123,10 @@ public class Loader {
 	public int loadTexture(String fileName, float bias) {
 		Texture texture = null;
 		try {
+			FileInputStream fs = new FileInputStream("res/" + fileName + ".png");
 			texture = TextureLoader.getTexture("PNG",
-					new FileInputStream("res/" + fileName + ".png"));
+					fs);
+			fs.close();
 			GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
 			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR_MIPMAP_LINEAR);
 			GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL14.GL_TEXTURE_LOD_BIAS, 0);
@@ -230,9 +240,18 @@ public class Loader {
 		return vaoID;
 	}
 	
-	private void storeDataInAttributeList(int attributeNumber, int coordinateSize,float[] data){
+	private int storeDataInAttributeList(int attributeNumber, int coordinateSize,float[] data){
 		int vboID = GL15.glGenBuffers();
 		vbos.add(vboID);
+		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboID);
+		FloatBuffer buffer = storeDataInFloatBuffer(data);
+		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
+		GL20.glVertexAttribPointer(attributeNumber,coordinateSize,GL11.GL_FLOAT,false,0,0);
+		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+		return vboID;
+	}
+	
+	private void updateDataInAttributeList(int attributeNumber, int coordinateSize,float[] data, int vboID){
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboID);
 		FloatBuffer buffer = storeDataInFloatBuffer(data);
 		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);

@@ -25,14 +25,30 @@ public class TextMaster {
 	public static void render()
 	{
 		renderer.render(texts);
+		texts.clear();
 	}
 	
 	public static void loadText(GUIText text)
 	{
 		FontType font = text.getFont();
 		TextMeshData data = font.loadText(text);
-		int vao = loader.loadToVAO(data.getVertexPositions(), data.getTextureCoords());
+		int[] vao = loader.loadToVAO(data.getVertexPositions(), data.getTextureCoords());
 		text.setMeshInfo(vao, data.getVertexCount());
+		List<GUIText> textBatch = texts.get(font);
+		if(textBatch == null)
+		{
+			textBatch = new ArrayList<GUIText>();
+			texts.put(font, textBatch);
+		}
+		textBatch.add(text);
+	}
+	
+	public static void updateText(GUIText text, int[] vaoID)
+	{
+		FontType font = text.getFont();
+		TextMeshData data = font.loadText(text);
+		loader.updateVAO(data.getVertexPositions(), data.getTextureCoords(), vaoID[0], vaoID[1], vaoID[2]);
+		text.setMeshInfo(vaoID, data.getVertexCount());
 		List<GUIText> textBatch = texts.get(font);
 		if(textBatch == null)
 		{

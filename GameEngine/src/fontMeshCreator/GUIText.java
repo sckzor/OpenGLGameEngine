@@ -11,7 +11,7 @@ public class GUIText {
 	private String textString;
 	private float fontSize;
 
-	private int textMeshVao;
+	private int[] textMeshGLObjects;
 	private int vertexCount;
 	private Vector3f colour = new Vector3f(0f, 0f, 0f);
 
@@ -58,11 +58,11 @@ public class GUIText {
 	}
 
 	public int getMesh() {
-		return textMeshVao;
+		return textMeshGLObjects[0];
 	}
 
-	public void setMeshInfo(int vao, int verticesCount) {
-		this.textMeshVao = vao;
+	public void setMeshInfo(int[] textMeshGLObjects, int verticesCount) {
+		this.textMeshGLObjects = textMeshGLObjects;
 		this.vertexCount = verticesCount;
 	}
 
@@ -93,8 +93,6 @@ public class GUIText {
 	public void setTextString(String string)
 	{
 		this.textString = string;
-		TextMaster.loadText(this);
-
+		TextMaster.updateText(this, textMeshGLObjects);
 	}
-
 }

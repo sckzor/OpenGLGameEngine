@@ -26,7 +26,7 @@ public class PhysicsHelper {
 	public static RigidBody createCapsule(float radius, float height, float mass, float x, float y, float z)
 	{
 		CollisionShape shape = new CapsuleShape(radius, height);
-		DefaultMotionState motionState = new DefaultMotionState(new Transform(new Matrix4f(new Quat4f(0, 0, 0, 1), new Vector3f(x, y-height, z), 1.0f)));
+		DefaultMotionState motionState = new DefaultMotionState(new Transform(new Matrix4f(new Quat4f(0, 0, 0, 1), new Vector3f(x, y, z), 1.0f)));
 
     	Vector3f Inertia = new Vector3f(0,0,0); 
     	shape.calculateLocalInertia(mass,Inertia); 
@@ -51,7 +51,8 @@ public class PhysicsHelper {
     	return new RigidBody(RigidBodyCI); 
 	}
 	
-	public static RigidBody addMesh(CollisionMesh model, float mass, float x, float y, float z, float scale){
+	public static RigidBody createCustomMesh(CollisionMesh model, float mass, float x, float y, float z, float scale){
+		//THIS CAN ONLY BE USED FOR STATIC OBJECTS
 	    float[] coords = model.getVertecies();
 	    int[] indices = model.getIndices();
 

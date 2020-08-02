@@ -3,6 +3,7 @@ package xmlParser;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,6 +25,11 @@ public class XmlParser {
 			e.printStackTrace();
 			System.err.println("Can't find the XML file: res/" + file + ".dae");
 			System.exit(0);
+			try {
+				reader.close();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
 			return null;
 		}
 		try {
@@ -35,6 +41,11 @@ public class XmlParser {
 			e.printStackTrace();
 			System.err.println("Error with XML file format for: res/" + file + ".dae");
 			System.exit(0);
+			try {
+				reader.close();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
 			return null;
 		}
 	}

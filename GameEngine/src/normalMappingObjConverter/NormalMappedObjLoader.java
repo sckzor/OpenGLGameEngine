@@ -72,6 +72,11 @@ public class NormalMappedObjLoader {
 			reader.close();
 		} catch (IOException e) {
 			System.err.println("Error reading the file");
+			try {
+				reader.close();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
 		}
 		removeUnusedVertices(vertices);
 		float[] verticesArray = new float[vertices.size() * 3];

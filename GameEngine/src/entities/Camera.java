@@ -4,15 +4,21 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 
+import com.bulletphysics.collision.dispatch.CollisionWorld.ClosestRayResultCallback;
+
+import physics.PhysicsMaster;
+
 public class Camera {
 	
+	private float targetDistanceFromPlayer = 50;
 	private float distanceFromPlayer = 50;
 	private float angleAroundPlayer = 0;
-	
+
 	private static final float CUBEMAP_NEAR_PLANE = 0.1f;
 	private static final float CUBEMAP_FAR_PLANE = 200f;
 	private static final float CUBEMAP_FOV = 90;// don't change!
 	private static final float CUBEMAP_ASPECT_RATIO = 1;
+	private static float Sensitivity = 0.001f;
 	
 	private Vector3f position = new Vector3f(0,0,0);
 	private float pitch = 20;
@@ -51,30 +57,32 @@ public class Camera {
 	
 	public void move(){
 		if(!doCubeMap) {
-			calculateZoom();
 			calculatePitch();
 			calculateAngleAroundPlayer();
-			float horizontalDistance = calculateHorizontalDistance();
-			float verticalDistance = calculateVerticalDistance();
-			calculateCameraPosition(horizontalDistance, verticalDistance);
+			float horizontalDistance = calculateHorizontalDistance(targetDistanceFromPlayer);
+			float verticalDistance = calculateVerticalDistance(targetDistanceFromPlayer);
+			Vector3f pos = calculateCameraPosition(horizontalDistance, verticalDistance);
+			javax.vecmath.Vector3f from = new javax.vecmath.Vector3f(player.getPosition().x/2, player.getPosition().y/2, player.getPosition().z/2);
+			javax.vecmath.Vector3f to = new javax.vecmath.Vector3f(pos.x, pos.y, pos.z);
+			ClosestRayResultCallback res = new ClosestRayResultCallback(from, to);
+			
+			PhysicsMaster.getDynamicsWorld().rayTest(from, to, res);
+
+			if(!res.hasHit()){
+			}else
+			{
+				position = new Vector3f(res.hitPointWorld.x,res.hitPointWorld.y,res.hitPointWorld.z);
+				System.out.println(pos);
+			}
+			position = pos;
+
 			this.yaw = 180 - (player.getRotY() + angleAroundPlayer);
 		}
 	}
 	
 	public void move(Vector3f position){
-		if(!doCubeMap) {
-			calculateZoom();
-			calculatePitch();
-			calculateAngleAroundPlayer();
-			float horizontalDistance = calculateHorizontalDistance();
-			float verticalDistance = calculateVerticalDistance();
-			calculateCameraPosition(horizontalDistance, verticalDistance);
-			this.yaw = 180 - (player.getRotY() + angleAroundPlayer);
-		}
-		else
-		{
-			this.position = position;
-		}
+
+		this.position = position;
 	}
 	
 	public void switchToFace(int faceIndex) {
@@ -132,48 +140,38 @@ public class Camera {
 		return roll;
 	}
 	
-	private void calculateCameraPosition(float horizDistance, float verticDistance)
+	private Vector3f calculateCameraPosition(float horizDistance, float verticDistance)
 	{
 		float theta = player.getRotY() + angleAroundPlayer;
 		float offsetX = (float) (horizDistance * Math.sin(Math.toRadians(theta)));
 		float offsetZ = (float) (horizDistance * Math.cos(Math.toRadians(theta)));
-		position.x = player.getPosition().x - offsetX;
-		position.z = player.getPosition().z - offsetZ;
-		position.y = player.getPosition().y + verticDistance;
+		Vector3f pos = new Vector3f();
+		pos.x = player.getPosition().x - offsetX;
+		pos.z = player.getPosition().z - offsetZ;
+		pos.y = player.getPosition().y + verticDistance;
+		return pos;
 	}
 	
-	private float calculateHorizontalDistance()
+	private float calculateHorizontalDistance(float distance)
 	{
-		return (float) (distanceFromPlayer * Math.cos(Math.toRadians(pitch)));
+		return (float) (distance * Math.cos(Math.toRadians(pitch)));
 	}
 	
-	private float calculateVerticalDistance()
+	private float calculateVerticalDistance(float distance)
 	{
-		return (float) (distanceFromPlayer * Math.sin(Math.toRadians(pitch)));
-	}
-	
-	private void calculateZoom()
-	{
-		float zoomLevel = Mouse.getDWheel() * 0.1f;
-		distanceFromPlayer -= zoomLevel;
+		return (float) (distance * Math.sin(Math.toRadians(pitch)));
 	}
 	
 	private void calculatePitch()
 	{
-		if(Mouse.isButtonDown(2))
-		{
-			float pitchChange = Mouse.getDY() * 0.1f;
-			pitch -= pitchChange;
-		}
+		float pitchChange = Mouse.getDY()  * 30 * Sensitivity;
+		pitch -= pitchChange;
 	}
 	
 	private void calculateAngleAroundPlayer()
 	{
-		if(Mouse.isButtonDown(1))
-		{
-			float angleChange = Mouse.getDX() * 0.3f;
-			angleAroundPlayer -= angleChange;
-		}
+		float angleChange = Mouse.getDX()* Sensitivity;
+		angleAroundPlayer -= angleChange;
 	}
 	
 	public Matrix4f getProjectionMatrix() {
@@ -206,6 +204,15 @@ public class Camera {
 		Matrix4f.translate(negativeCameraPos, viewMatrix, viewMatrix);
 
 		Matrix4f.mul(projectionMatrix, viewMatrix, projectionViewMatrix);
+	}
+	
+	
+	public float getAngleAroundPlayer() {
+		return angleAroundPlayer;
+	}
+	
+	public float getDistanceFromPlayer() {
+		return distanceFromPlayer;
 	}
 
 }
